@@ -1,0 +1,144 @@
+package me.kaiyan.realisticvehicles.Counters;
+
+import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
+import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
+import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
+import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
+import org.bukkit.ChatColor;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
+import org.bukkit.event.entity.EntityDamageEvent;
+
+import java.util.*;
+import java.util.function.Predicate;
+
+public class Updates {
+    public static List<FixedUpdate> fixedUpdates = new ArrayList<>();
+
+    public static void addListener(FixedUpdate update){
+        fixedUpdates.add(update);
+    }
+
+    public static void triggerFixedUpdate(){
+        try {
+            for (FixedUpdate update : fixedUpdates) {
+                if (update != null) {
+                    update.OnFixedUpdate();
+                }
+            }
+            calculateShellImpacts();
+        } catch (ConcurrentModificationException ignore){
+
+        }
+    }
+
+    public static void onClose(){
+        for (FixedUpdate update : fixedUpdates){
+            update.OnClose();
+        }
+    }
+
+    public static List<VehicleInterface> getActiveVehicles(){
+        List<VehicleInterface> vehicles = new ArrayList<>();
+        for (FixedUpdate update : fixedUpdates){
+            if (update instanceof VehicleInterface inter){
+                vehicles.add(inter);
+            }
+        }
+        return vehicles;
+    }
+
+    public static void calculateShellImpacts(){
+        List<ProjectileShell> shells = new ArrayList<>();
+        List<VehicleInterface> vehicles = new ArrayList<>();
+
+        for (FixedUpdate update : fixedUpdates){
+            if (update instanceof ProjectileShell shell){
+                shells.add(shell);
+            } else if (update instanceof VehicleInterface vehicle){
+                vehicles.add(vehicle);
+            }
+        }
+        for (VehicleInterface vehicle : vehicles){
+            List<ProjectileShell> boundingShells = shells.stream().filter(shell -> vehicle.getDamageModel().isInBoundingBox(shell.loc, vehicle.getLoc()) && shell.player != vehicle.getSeatedPlayer()).toList();
+            if (boundingShells.size() == 0){
+                continue;
+            }
+            for (ProjectileShell shell : boundingShells){
+                System.out.println("Hit");
+                ImpactOutData data = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.getYaw(), shell.getPitch(), shell.loc.getWorld(), 0, true, shell.player);
+                shell.closeThis();
+                if (data.getDestroyedIndex() == -1){
+                    continue;
+                }
+                Component comp = vehicle.getDamageModel().getComponents().get(data.getDestroyedIndex());
+                if (comp.type == ComponentType.FUEL){
+                    //TODO Add Effects to fuel burnout.
+                    vehicle.explode();
+                } else if (comp.type == ComponentType.AMMOSTOWAGE){
+                    vehicle.fizzleAmmo(data.getDestroyedIndex());
+                }
+                if (data.getPlayerDamage() == 0){
+                    continue;
+                }
+                if (vehicle.getSeatedPlayer() != null){
+                    if (!(vehicle.getSeatedPlayer().getHealth() - data.getPlayerDamage() > 0)) {
+                        expectedDeaths.put(vehicle.getSeatedPlayer(), vehicle.getSeatedPlayer() + " was killed in a " + vehicle.getNameType() + " by " + shell.player + " in a " + getPlayerVehicle(shell.player).getNameType());
+                    }
+                    vehicle.getSeatedPlayer().damage(data.getPlayerDamage());
+                }
+            }
+        }
+    }
+    public static HashMap<Player, String> expectedDeaths = new HashMap<>();
+
+    /*public static void getShellImpact(VehicleInterface vehicle){
+        for (FixedUpdate update : fixedUpdates){
+            if (update instanceof ProjectileShell shell){
+                if (vehicle.getDamageModel().isInBoundingBox(shell.loc, vehicle.getLoc()) && vehicle.getSeatedPlayer() != shell.player) {
+                    int ammo = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.yaw, -shell.pitch, shell.loc.getWorld(), 0, true, shell.player);
+                    shell.closeThis();
+                    if (ammo == -2){
+                        vehicle.explode();
+                    } else if (ammo != -1) {
+                        vehicle.fizzleAmmo(ammo);
+                    }
+                }
+            }
+        }
+    }*/
+
+    public static VehicleInterface getVehicleFromSeat(Entity seatEnt){
+        for (FixedUpdate update : fixedUpdates){
+            if (update instanceof VehicleInterface inter){
+                if (inter.getBaseSeat().getUniqueId() == seatEnt.getUniqueId()){
+                    return inter;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static VehicleInterface getVehicleFromId(String id){
+        for (FixedUpdate update : fixedUpdates){
+            if (update instanceof VehicleInterface inter){
+                if (Objects.equals(inter.getID(), id)){
+                    return inter;
+                }
+            }
+        }
+        return null;
+    }
+
+    public static VehicleInterface getPlayerVehicle(Player player){
+        for (VehicleInterface vehicle : getActiveVehicles()){
+            //System.out.println("Vehicle:"+vehicle);
+            if (vehicle.getSeatedPlayer() == player){
+                return vehicle;
+            }
+        }
+        return null;
+    }
+}

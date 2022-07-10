@@ -1,0 +1,24 @@
+resource-pack: https://www.dropbox.com/s/0rjdy13unagbrr7/TankPackV5.zip?dl=1
+
+armour-repair-cost: 200
+components-repair-cost: 200
+
+fuelTypes:
+    # Name of fuel
+    diesel:
+        name: Diesel
+        # Density of fuel
+        # 1 = 1 fuel used up per fuel check
+        # 0.5 = 2 fuel used up per check
+        # fuel = fuelConsumptionAmount/fuelDensity
+        fuelDensity: 1
+        # Amount of money to give per fuel "unit"
+        # 200 fuel at a rate of 5 will cost 1000
+        fuelExchangeRate: 5
+        # Icon to display the fuel type as
+        matIcon: COAL_BLOCK
+    jetFuel:
+        name: Jet Fuel
+        fuelDensity: 10
+        fuelExchangeRate: 100
+        matIcon: FIRE_CHARGE

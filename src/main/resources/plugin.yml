@@ -1,0 +1,35 @@
+## CHANGE this to the name of your plugin.
+name: RealisticVehicles
+
+## CHANGE this to your username.
+author: Kaiyan2006
+
+## CHANGE this to a meaninful but short description of your plugin.
+description: Adds realistic vehicles
+
+## CHANGE this to the path of the class that extends JavaPlugin.
+main: me.kaiyan.realisticvehicles.RealisticVehicles
+
+## You can change this to link to your website or repository. You can also remove this line if you want to.
+website: none
+
+## This value is automatically replaced by the version specified in your pom.xml file.
+## Do not change this.
+version: 1.0.0
+
+load: POSTWORLD
+
+## This is the minimum minecraft version required to run your plugin.
+api-version: 1.14
+
+## increase entity view dist
+entity-tracking-range:
+    armour_stand: 128
+
+depend: [ProtocolLib, Vault]
+
+commands:
+   realvehicles:
+      aliases: [rv, realisticvehicles, realv, minethunder, mt, minet]
+      description: Your description
+      usage: /<command>
