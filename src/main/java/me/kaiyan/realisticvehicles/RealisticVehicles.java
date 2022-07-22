@@ -3,7 +3,7 @@ package me.kaiyan.realisticvehicles;
 import com.comphenix.protocol.ProtocolLibrary;
 import com.comphenix.protocol.ProtocolManager;
 import me.kaiyan.realisticvehicles.Commands.TestCommands;
-import me.kaiyan.realisticvehicles.Counters.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
 import me.kaiyan.realisticvehicles.Counters.TPSCounter;
 import me.kaiyan.realisticvehicles.Counters.Updates;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
@@ -12,17 +12,21 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.ArmourPlate;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.Traversable;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
+import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
+import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.Particle;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ArmorStand;
@@ -38,14 +42,15 @@ import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
-import org.sqlite.SQLiteConfig;
+import org.ipvp.canvas.MenuFunctionListener;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
 public class RealisticVehicles extends JavaPlugin {
+    public static NamespacedKey SCRAPKEY;
+
     public static RealisticVehicles plugin;
     public static ProtocolManager protocolManager;
 
@@ -54,6 +59,7 @@ public class RealisticVehicles extends JavaPlugin {
     @Override
     public void onEnable() {
         plugin = this;
+        SCRAPKEY = new NamespacedKey(RealisticVehicles.getInstance(), "scrap");
         Objects.requireNonNull(getCommand("realvehicles")).setExecutor(new TestCommands());
         new TPSCounter().runTaskTimer(this, 0, 1);
         protocolManager = ProtocolLibrary.getProtocolManager();
@@ -61,6 +67,8 @@ public class RealisticVehicles extends JavaPlugin {
         setupVehicles();
 
         getServer().getPluginManager().registerEvents(new EventListener(), this);
+        getServer().getPluginManager().registerEvents(new MenuFunctionListener(), this);
+        System.out.println("Registered Events");
 
         new BukkitRunnable(){
 
@@ -75,6 +83,10 @@ public class RealisticVehicles extends JavaPlugin {
         saveDefaultConfig();
 
         loadFuelTypes();
+
+        //WorldServer server = (WorldServer) getServer().getWorlds().get(0);
+        //Gets holder for EntityTracker
+        //server.k().a;
     }
 
     private boolean setupEconomy() {
@@ -107,32 +119,33 @@ public class RealisticVehicles extends JavaPlugin {
 
     public void setupVehicles(){
         TankSettings tankSettings = new TankSettings("Challenger II", 500);
-        tankSettings.setVehicleData(0.05, 0.05, 3f, 0.01, 0.75, 0.03, 0.04, 0.2,1.2,2, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
+        tankSettings.setVehicleData(0.05, 0.05, 3f, 0.01, 0.75, 0.03, 0.04, 2, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
         tankSettings.setTankData(5, 1, -10, 15);
+        tankSettings.setSize(1, 3);
 
         DamageModel damageModel = new DamageModel(new Rect(0, 0.75, 0.5,8, 2, 9, true), new Rect(0, 2.75, 0.5,8, 2, 9, true));
 
         //Front Plating
-        damageModel.addArmour(new ArmourPlate(0.75, 0, 1, 3, 1, 1, 1.5, true, 0.8));
-        damageModel.addArmour(new ArmourPlate(1.25, 0, 1, 2, 3, 1, 1, true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.75, 0, 1, 3, 1, 1, 1.5, true, 0.8, false));
+        damageModel.addArmour(new ArmourPlate(1.25, 0, 1, 2, 3, 1, 1, true, 0.8, false));
         //Side Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 1.3, 0.5, 0, 0.5, 1, 4, true, 0.8));
-        damageModel.addArmour(new ArmourPlate(0.25, -1.3, 0.5, 0, 0.5, 1, 4, true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.25, 1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
+        damageModel.addArmour(new ArmourPlate(0.25, -1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
         //Rear Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 0, 1, -2, 3, 1, 0.5, true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.25, 0, 1, -2, 3, 1, 0.5, true, 0.8, false));
         //Rear Roof Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 0, 1.55, -1.25, 3, 0.25, 1, true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.25, 0, 1.55, -1.25, 3, 0.25, 1, true, 0.8, false));
 
         //Turret Plating
         //Side plating
-        damageModel.addArmour(new ArmourPlate(0.1,1,2,-0.5,0.5,0.8,3,true, 0.8));
-        damageModel.addArmour(new ArmourPlate(0.1,-1,2,-0.5,0.5,0.8,3,true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.1,1,2,-0.5,0.5,0.8,3,true, 0.8, true));
+        damageModel.addArmour(new ArmourPlate(0.1,-1,2,-0.5,0.5,0.8,3,true, 0.8, true));
         //Front Plating
-        damageModel.addArmour(new ArmourPlate(2,0,2,1,2,1,1,true, 0.8));
+        damageModel.addArmour(new ArmourPlate(2,0,2,1,2,1,1,true, 0.8, true));
         //Rear Plating
-        damageModel.addArmour(new ArmourPlate(0.5,0,2,-1.5,2,1,0.5,true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.5,0,2,-1.5,2,1,0.5,true, 0.8, true));
         //Roof Plating
-        damageModel.addArmour(new ArmourPlate(0.5,0,2.75,-0.5,2,0.5,3,true, 0.8));
+        damageModel.addArmour(new ArmourPlate(0.5,0,2.75,-0.5,2,0.5,3,true, 0.8, true));
         //Components
         //Engine
         damageModel.addComponent(new Component(ComponentType.ENGINE, 5, 1,0.7,0.25,false, 0, 1, -1.5, 2, 1, 1, true,false, Particle.SMOKE_NORMAL, Particle.CAMPFIRE_COSY_SMOKE, Particle.LAVA, false));
@@ -144,26 +157,19 @@ public class RealisticVehicles extends JavaPlugin {
         damageModel.addComponent(new Component(ComponentType.GUNLOADER, 3, 0.5,0.4,0.3,false, 0,2, 0.5, 0.6, 0.5, 0.6, true,true, Particle.ASH, Particle.CRIT, Particle.CRIT_MAGIC, false));
         damageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2,1.8,1.5,true, 0.5,1, -0.5, 0.5, 0.5, 0.75, true,false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA, false));
         damageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2,1.8,1.5,true, -0.5,1, -0.5, 0.5, 0.5, 0.75, true,false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA, false));
+        damageModel.addComponent(new Component(ComponentType.PLAYER, 0, 20,1.8,1.5,true, 0.1,1, -0.3, 0.75, 1.25, 0.75, true,true, Particle.ASH, Particle.ASH, Particle.ASH, false));
 
         damageModel.finish();
 
         tankSettings.setDamageModel(damageModel);
         tankSettings.setPositions(new Vector(-0.85, -0.5, -0.2),new Vector(-0.85, 0.4, -0.2), new Vector(0, 1.5, 3.5), new Vector(0.5, 1.5, 2));
-        Shell apShell = new Shell(5, 1.5, true, false, false,false, Material.GLASS, Collections.singletonList("&eArmour Piercing Sabot Round"),4, true, 0.2f, 100, 0.05, 1);
+        Shell apShell = new Shell(5, 1.5, true, false, false,false, Material.GLASS, Collections.singletonList("&eArmour Piercing Sabot Round"),4, true, 3f, 100, 0.05, 1);
         Shell heshShell = new Shell(3, 6, false, false, true,false, Material.TNT, List.of("&eHigh Explosive Squash Head", "Low penetration but extremely damaging to armour"),2, false, 6f, 400, 0.4, 1);
         Shell heatShell = new Shell(5, 0.25, false, false, false, true, Material.HOPPER, Collections.singletonList("&eHigh Explosive Anti-Tank"), 5, true, 3.5f, 500, 0, 1);
         tankSettings.setShellData(apShell, heshShell, heatShell);
         tankSettings.setFuelData(100, 0.05f, 0, 2000, 0.05f);
 
         tankSettings.register();
-
-        CarSettings settings = new CarSettings("ahmad", 69420);
-
-        settings.setDamageModel(damageModel);
-        settings.setVehicleData(0.1, 0.05, 5, 0.025, 1.5, 0.05, 0.05, 0.5, 1.2, 2, GroundVehicle.SteerType.REGULAR, Traversable.BLOCK);
-        settings.setFuelData(500, 0.1f, 0, 10000, 0.5f);
-        settings.setSeatPos(new Vector(-0.85, 0.4, -0.2));
-        settings.register();
 
         DamageModel migModel = new DamageModel(new Rect(0, 0, 0, 10, 10, 10, true), null);
 
@@ -177,14 +183,16 @@ public class RealisticVehicles extends JavaPlugin {
         migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, -1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
         migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, 1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
         migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, -1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
+        migModel.addComponent(new Component(ComponentType.ENGINE, 0.25, 3, 2, 1, false, 0, 1.25, -1.25, 0.75, 1.25, 1.25, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY, false));
+        migModel.addComponent(new Component(ComponentType.LANDINGGEAR, 0.25, 3, 2, 1, false, 0, 0.5, 1, 0.5, 1, 0.5, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY, false));
 
-        
         migModel.finish();
 
         AirVehicleSettings planeSettings = new AirVehicleSettings("MIG 31", 601);
         planeSettings.setSeatPos(new Vector(0, -0.5, 0));
         planeSettings.setControlData(1, 2, 3, 1, 1.75);
-        planeSettings.setFlightData(6, 0.025, 0.002, 1.5, 2.25);
+        planeSettings.setFlightData(6, 0.035, 0.0025, 2, 2.75, 3);
+        planeSettings.setSize(1, 3);
         planeSettings.setDamageModel(migModel);
         planeSettings.setFireRate(0);
         planeSettings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
@@ -192,6 +200,11 @@ public class RealisticVehicles extends JavaPlugin {
         planeSettings.setFuelData(20, 0.1f, 0, 150, 0.05f);
 
         planeSettings.addModelSegment(new int[]{0, 0}, 601);
+
+        planeSettings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
+        planeSettings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
+        planeSettings.addMissile(new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000));
+        planeSettings.setRadar(60, 1000);
 
         planeSettings.register();
 
@@ -205,11 +218,8 @@ public class RealisticVehicles extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        for (Tank tank : Tank.tanks){
-            if (tank.getSeatedPlayer() != null){
-                tank.playerExitedVehicle(true);
-                tank.driverSeat.eject();
-            }
+        for (FixedUpdate inter : Updates.fixedUpdates){
+            inter.closeThis(true);
         }
         Updates.onClose();
     }
@@ -282,6 +292,7 @@ public class RealisticVehicles extends JavaPlugin {
         ent.setPersistent(true);
         ent.setInvulnerable(true);
         ent.setGravity(false);
+        ent.setInvisible(true);
         ItemStack helmet = new ItemStack(Material.WOODEN_HOE);
         ItemMeta meta = helmet.getItemMeta();
         assert meta != null;

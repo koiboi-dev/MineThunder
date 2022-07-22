@@ -1,5 +1,6 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
+import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 
 import java.util.ArrayList;
@@ -7,8 +8,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class MissileSettings {
-    public static final List<MissileSettings> register = new ArrayList<>();
-
     private final float power;
     private final float speed;
     private final float turnRate;
@@ -17,8 +16,10 @@ public class MissileSettings {
     private final TrackingType type;
     private final String name;
     private final int texID;
+    private final double passiveScanAngle;
+    private final double passiveScanDistance;
 
-    public MissileSettings(float power, float speed, float turnRate, float startFuel, float burnRate, TrackingType type, String name, int texID) {
+    public MissileSettings(float power, float speed, float turnRate, float startFuel, float burnRate, TrackingType type, String name, int texID, double passiveScanAngle, double passiveScanDistance) {
         this.power = power;
         this.speed = speed;
         this.turnRate = turnRate;
@@ -27,6 +28,16 @@ public class MissileSettings {
         this.type = type;
         this.name = name;
         this.texID = texID;
+        this.passiveScanAngle = passiveScanAngle;
+        this.passiveScanDistance = passiveScanDistance;
+    }
+
+    public double getPassiveScanDistance() {
+        return passiveScanDistance;
+    }
+
+    public double getPassiveScanAngle() {
+        return passiveScanAngle;
     }
 
     public int getTexID() {
@@ -57,18 +68,19 @@ public class MissileSettings {
         return name;
     }
 
-    public static MissileSettings getMissileFromSettings(String name){
-        Optional<MissileSettings> settings = register.stream().filter(missileSettings -> missileSettings.name.equals(name)).findFirst();
-        return settings.orElse(null);
-    }
-
     public float getStartFuel() {
         return startFuel;
     }
 
-    public void register(){
-        register.add(this);
+    public String toJson(){
+        return new Gson().toJson(this);
     }
 
+    public String toString(){
+        return toJson();
+    }
 
+    public MissileSettings fromJson(String json){
+        return new Gson().fromJson(json, MissileSettings.class);
+    }
 }

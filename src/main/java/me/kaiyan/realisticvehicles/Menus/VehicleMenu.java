@@ -4,8 +4,12 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.ArmourPlate;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
+import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
+import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
+import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -21,42 +25,45 @@ import org.ipvp.canvas.slot.Slot;
 import org.ipvp.canvas.type.ChestMenu;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class VehicleMenu {
     public static void showMenu(VehicleInterface vehicle, Player player){
-        Menu menu = ChestMenu.builder(1).title(vehicle.getNameType()).redraw(false).build();
-        Slot fuelSlot = menu.getSlot(1);
+        Menu menu = ChestMenu.builder(2).title(vehicle.getNameType()).redraw(false).build();
+        Slot fuelSlot = menu.getSlot(1+9);
         ItemStack fuelItem = new ItemStack(getMatFromFuel(vehicle.getFuelTank().getFuel(), vehicle.getFuelTank().getMaxFuel()));
         ItemMeta meta = fuelItem.getItemMeta();
         assert meta != null;
         meta.setDisplayName(ChatColor.GOLD+"Fuel Amount");
-        meta.setLore(Arrays.asList(ChatColor.GREEN+"The amount of fuel left in the vehicle",
-                ChatColor.GREEN+"Percent: "+(vehicle.getFuelTank().getFuel()/vehicle.getFuelTank().getMaxFuel())*100+"%",
-                ChatColor.GREEN+"Fuel: "+vehicle.getFuelTank().getFuel(),
-                ChatColor.GREEN+"Max Fuel: "+vehicle.getFuelTank().getMaxFuel(),
-                ChatColor.GREEN+"Fuel Type: "+vehicle.getFuelTank().getLoadedFuelType().getFuelName(),
-                ChatColor.GREEN+"Click to refuel "+vehicle.getFuelTank().getMaxFuel()/10)
+        meta.setLore(List.of(
+                ChatColor.GREEN + "The amount of fuel left in the vehicle",
+                String.format(ChatColor.GREEN + "Percent: %.2f", (vehicle.getFuelTank().getFuel() / vehicle.getFuelTank().getMaxFuel()) * 100) + "%",
+                String.format(ChatColor.GREEN + "Fuel: %.2f", vehicle.getFuelTank().getFuel()),
+                String.format(ChatColor.GREEN + "Max Fuel: %.2f", vehicle.getFuelTank().getMaxFuel()),
+                String.format(ChatColor.GREEN + "Fuel Type: %s", vehicle.getFuelTank().getLoadedFuelType().getFuelName()),
+                String.format(ChatColor.GREEN + "Click to refuel %.2f", vehicle.getFuelTank().getMaxFuel() / 10))
         );
         fuelItem.setItemMeta(meta);
         fuelSlot.setItem(fuelItem);
         fuelSlot.setClickHandler(((gplayer, clickInformation) -> displayFuelMenu(player, vehicle)));
 
         for (int i = 0; i < 3; i++) {
-            Slot ammoSlot = menu.getSlot(i+3);
+            Slot ammoSlot = menu.getSlot(i+3+9);
             Shell shell = vehicle.getShells()[i];
             if (shell != null) {
                 ItemStack item = new ItemStack(shell.item);
                 ItemMeta imeta = item.getItemMeta();
                 assert imeta != null;
                 imeta.setDisplayName(shell.getAbbreviation());
-                imeta.setLore(Arrays.asList("Current Amount: "+vehicle.getShellsAmmo()[i], "Buys 1 shell at "+shell.cost));
+                imeta.setLore(Arrays.asList("Current Amount: "+vehicle.getShellsAmmo()[i], "Buys "+shell.buyAmount+" shell at "+shell.cost));
                 item.setItemMeta(imeta);
                 ammoSlot.setItem(item);
                 int finalI = i;
                 ammoSlot.setClickHandler((player1, clickInformation) -> {
                     if (RealisticVehicles.getEconomy().getBalance(player) >= shell.cost){
                         RealisticVehicles.getEconomy().withdrawPlayer(player, shell.cost);
-                        vehicle.addShells(finalI, 1);
+                        vehicle.addShells(finalI, shell.buyAmount);
                         player.sendMessage(ChatColor.GREEN+"Restocked a shell, Shell count: " +vehicle.getShellsAmmo()[finalI]);
                         menu.close(player);
                         showMenu(vehicle,player);
@@ -67,18 +74,19 @@ public class VehicleMenu {
             }
         }
 
-        Slot repairSlot = menu.getSlot(7);
+        Slot repairSlot = menu.getSlot(7+9);
         ItemStack repairItem = new ItemStack(Material.BOOK);
         ItemMeta rmeta = repairItem.getItemMeta();
         assert rmeta != null;
-        rmeta.setDisplayName(ChatColor.GREEN+"Repair Tank");
+        rmeta.setDisplayName(ChatColor.GREEN+"Repair Vehicle");
         double armourRepairCost = 0;
         for (ArmourPlate armour : vehicle.getDamageModel().getArmour()){
-            armourRepairCost += Math.round(armour.weakness*RealisticVehicles.getInstance().getConfig().getDouble("armour-repair-cost"));
+            System.out.println(Math.round(armour.weakness));
+            armourRepairCost += Math.round(armour.weakness*RealisticVehicles.getInstance().getConfig().getDouble("armor-repair-cost"));
         }
         double componentRepairCost = 0;
         for (Component comp : vehicle.getDamageModel().getComponents()){
-            componentRepairCost += Math.round(comp.health*RealisticVehicles.getInstance().getConfig().getDouble("components-repair-costs"));
+            componentRepairCost += Math.round((comp.maxHealth-comp.health)*RealisticVehicles.getInstance().getConfig().getDouble("component-repair-cost"));
         }
         rmeta.setLore(Arrays.asList(ChatColor.GOLD+"Right Click - Repair Armour, Costs: " + armourRepairCost,ChatColor.GOLD+"Left Click - Repair Components, Costs: " +componentRepairCost));
         repairItem.setItemMeta(rmeta);
@@ -88,7 +96,7 @@ public class VehicleMenu {
         double finalArmourRepairCost = armourRepairCost;
         double finalComponentRepairCost = componentRepairCost;
         repairSlot.setClickHandler((rplayer, clickInformation) -> {
-            if (clickInformation.getClickType() == ClickType.RIGHT && finalArmourRepairCost != 0){
+            if (clickInformation.getClickType() == ClickType.RIGHT){
                 if (RealisticVehicles.getEconomy().has(rplayer, finalArmourRepairCost)) {
                     for (ArmourPlate armour : vehicle.getDamageModel().getArmour()) {
                         armour.weakness = 0;
@@ -97,7 +105,7 @@ public class VehicleMenu {
                 } else {
                     rplayer.sendMessage(ChatColor.RED+"Not enough money to repair armour.");
                 }
-            } else if (finalComponentRepairCost != 0){
+            } else {
                 if (RealisticVehicles.getEconomy().has(rplayer, finalComponentRepairCost)) {
                     if (RealisticVehicles.getEconomy().has(rplayer, finalComponentRepairCost)) {
                         for (Component comp : vehicle.getDamageModel().getComponents()) {
@@ -112,10 +120,91 @@ public class VehicleMenu {
             }
         });
 
-        Mask mask = BinaryMask.builder(menu).pattern("101000101").item(new ItemStack(Material.GRAY_STAINED_GLASS_PANE)).build();
+        if (vehicle.getMissileHolder() != null){
+            Slot missileSlot = menu.getSlot(1);
+            ItemStack missileItem = new ItemStack(Material.GOLDEN_HOE);
+            ItemMeta missileMeta = missileItem.getItemMeta();
+            assert missileMeta != null;
+            missileMeta.setDisplayName("Configure Missile Setup");
+            missileItem.setItemMeta(missileMeta);
+            missileSlot.setItem(missileItem);
+            missileSlot.setClickHandler((ply, info) -> {
+                generateEquipmentMenu(vehicle.getMissileHolder(), vehicle, player).open(player);
+            });
+        }
+
+        Slot deleteSlot = menu.getSlot(7);
+        ItemStack deleteItem = new ItemStack(Material.BARRIER);
+        ItemMeta deleteMeta = deleteItem.getItemMeta();
+        assert deleteMeta != null;
+        deleteMeta.setDisplayName("Pickup Vehicle");
+        deleteMeta.setLore(Arrays.asList("Picks up the vehicle as a item", ChatColor.DARK_RED+"WILL DELETE ANY ITEMS/FLUIDS IN THE VEHICLE"));
+        deleteItem.setItemMeta(deleteMeta);
+        deleteSlot.setItem(deleteItem);
+        deleteSlot.setClickHandler((ply, info) -> {
+            ply.getWorld().dropItem(ply.getLocation(), ItemGenerator.getItemFromVehicle(vehicle));
+            vehicle.scrap(true);
+            menu.close();
+        });
+
+        Mask mask = BinaryMask.builder(menu).pattern("101111101").pattern("101000101").item(new ItemStack(Material.GRAY_STAINED_GLASS_PANE)).build();
         mask.apply(menu);
 
         menu.open(player);
+    }
+    public static Menu generateEquipmentMenu(MissileHolder holder, VehicleInterface inter, Player player){
+        Menu menu = ChestMenu.builder(3).build();
+
+        int loops = 0;
+        for (MissileSlot slots : holder.getMissiles()){
+            Slot slot = menu.getSlot(loops);
+            ItemStack item;
+            if (slots.getSettings() == null) {
+                item = new ItemStack(Material.RED_STAINED_GLASS_PANE);
+            } else {
+                item = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+            }
+            ItemMeta meta = item.getItemMeta();
+            assert meta != null;
+            meta.setDisplayName(slots.getName());
+            meta.setLore(List.of("Missile attachment point.", "Replacing the missile inside WILL DELETE IT."));
+            item.setItemMeta(meta);
+            slot.setItem(item);
+            slot.setClickHandler((player1, clickInformation) -> generateMissileMenu(slots, inter).open(player));
+            loops++;
+        }
+
+        return menu;
+    }
+
+    public static Menu generateMissileMenu(MissileSlot mSlot, VehicleInterface inter){
+        Menu menu = ChestMenu.builder(3).build();
+
+        int loops = 0;
+        for (MissileSettings settings : inter.getValidMissiles()){
+            Slot slot = menu.getSlot(loops);
+            ItemStack item = new ItemStack(Material.WOODEN_HOE);
+            ItemMeta meta = item.getItemMeta();
+            assert meta != null;
+            meta.setDisplayName(settings.getName());
+            meta.setLore(Arrays.asList(String.format("Power: %f-Speed: %f-Turn Rate:%f-Tracking Type: %s-Fuel: %f", settings.getPower(), settings.getSpeed(), settings.getTurnRate(), settings.getType(), settings.getStartFuel()).split("-")));
+            meta.setCustomModelData(settings.getTexID());
+            item.setItemMeta(meta);
+            slot.setItem(item);
+
+            slot.setClickHandler((player, info) -> {
+                if (mSlot.getSettings() != null){
+                    mSlot.setSettings(null);
+                    mSlot.getStand().remove();
+                }
+                mSlot.setSettings(settings);
+                mSlot.generateArmourStand(inter.getLoc());
+                menu.close();
+            });
+
+            loops++;
+        }
+        return menu;
     }
 
     public static void displayFuelMenu(Player player, VehicleInterface vtype){

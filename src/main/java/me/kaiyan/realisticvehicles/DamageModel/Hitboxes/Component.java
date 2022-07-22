@@ -1,5 +1,6 @@
 package me.kaiyan.realisticvehicles.DamageModel.Hitboxes;
 
+import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.Rect;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import org.bukkit.Particle;
@@ -24,7 +25,6 @@ public class Component extends Rect implements Cloneable{
     final Particle crtParticle;
     final Particle desParticle;
 
-    public int destroyableIndex = -1;
     public final boolean isAmmo;
 
     public Component(ComponentType type, double penDefence, double health, double damageHealth, double criticalHealth, boolean destroys, double x, double y, double z, double xsize, double ysize, double zsize, boolean centered, boolean upper,Particle damageParticle, Particle critParticle, Particle destParticle, boolean isAmmo) {
@@ -77,5 +77,10 @@ public class Component extends Rect implements Cloneable{
     }
     public Vector getCenterVector(){
         return new Vector(x+xsize/2,y+ysize/2,z+zsize/2);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

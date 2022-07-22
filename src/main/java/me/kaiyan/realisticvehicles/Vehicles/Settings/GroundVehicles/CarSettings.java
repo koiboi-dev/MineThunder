@@ -1,35 +1,27 @@
 package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 
-import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
-import me.kaiyan.realisticvehicles.Vehicles.Car;
+import me.kaiyan.realisticvehicles.ModelHandlers.Model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.HashMap;
 
-public class CarSettings extends GroundVehicleSettings {
-    DamageModel damageModel;
+public class CarSettings extends GroundVehicleSettings{
+    private final Model model;
+    private final HashMap<int[], Integer> models = new HashMap<>();
 
-    public CarSettings(String type, int textureID) {
+    public CarSettings(String type, int textureID, Model model) {
         super(type, textureID);
+        this.model = model;
     }
 
-    public static List<CarSettings> register = new ArrayList<>();
-
-    public void register(){
-        register.add(this);
+    public Model getModel() {
+        return model;
     }
 
-    public void setDamageModel(DamageModel model){
-        damageModel = model.clone();
+    public void addModelSegment(int[] coords, int modelID){
+        models.put(coords, modelID);
     }
 
-    public static CarSettings getCarSettings(String type){
-        for (CarSettings settings : register){
-            if (Objects.equals(settings.getType(), type)){
-                return settings;
-            }
-        }
-        return null;
+    public HashMap<int[], Integer> getModels() {
+        return models;
     }
 }

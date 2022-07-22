@@ -1,5 +1,6 @@
 package me.kaiyan.realisticvehicles.DamageModel;
 
+import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.Rect;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.VectorD;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.ArmourPlate;
@@ -7,6 +8,7 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
+import me.kaiyan.realisticvehicles.DataTypes.RadarTarget;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -14,6 +16,7 @@ import org.bukkit.util.Vector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +71,7 @@ public class DamageModel implements Cloneable{
     public ImpactOutData shellImpact(Shell shell, Location centerloc, Location shellloc, float vehicleyaw, float turretyaw, float yaw, float pitch, World world, int override, boolean sendResult, Player player){
         return shellImpact(shell, centerloc.getX(), centerloc.getY(), centerloc.getZ(), shellloc.getX(), shellloc.getY(), shellloc.getZ(), vehicleyaw, turretyaw, yaw, pitch, world, override, sendResult, player);
     }
+    Random rand = new Random();
     /**
      * Simulates a shell hitting the target @class DamageModel
      * @return Returns the ammo index of the target destroyed.
@@ -164,7 +168,7 @@ public class DamageModel implements Cloneable{
                     RealisticVehicles.debugLog("Hit Plate");
                     penningArmor = true;
                     hitPlate = true;
-                    world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 10f, 0.65f);
+                    world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 2f, 0.65f);
                     // 70% chance to apply damage
                     if (!shell.heat) {
                         if (!shell.sabot) {
@@ -220,12 +224,12 @@ public class DamageModel implements Cloneable{
                 RealisticVehicles.debugLog("Stopped Pen");
                 penningArmor = false;
                 pennedArmour = true;
-                world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 10f, 0.8f);
+                world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 2f, 0.8f);
                 if (!heatFired && shell.heat){
                     loops = maxLoops-10;
                     heatFired = true;
                     RealisticVehicles.debugLog("FIRED");
-                    world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 10f, 0.6f);
+                    world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f);
                 }
             }
             for (Component comp : components){
@@ -235,7 +239,7 @@ public class DamageModel implements Cloneable{
                     if (comp.type == ComponentType.PLAYER){
                         data.addPlayerDamage((int) shell.shellDamage);
                     }
-                    world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 10f, 0.7f);
+                    world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 2f, 0.7f);
                     if (shell.penScore > 0) {
                         comp.health -= shell.shellDamage;
                     } else if (shell.penScore <= 0){
@@ -245,14 +249,15 @@ public class DamageModel implements Cloneable{
                     hitComponent = true;
                     if (comp.health <= 0){
                         RealisticVehicles.debugLog("Component Destroyed.");
-                        world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 10f, 2f);
+                        world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 2f, 2f);
                         comp.destroyed = true;
                         destroyComponent = true;
                         if (comp.destroys && comp.isAmmo){
-                            data.setDestroyedIndex(comp.destroyableIndex);
+                            System.out.println(components.indexOf(comp));
+                            data.setDestroyedIndex(components.indexOf(comp));
                             return data;
                         } else if (comp.destroys){
-                            data.setDestroyedIndex(comp.destroyableIndex);
+                            data.setDestroyedIndex(components.indexOf(comp));
                             return data;
                         }
                     }
@@ -331,8 +336,93 @@ public class DamageModel implements Cloneable{
         return data;
     }
 
+    public ImpactOutData explosionImpact(double power, final double x, final double y, final double z, final double vx, final double vy, final double vz, Player player){
+        if (!finished){
+            Bukkit.getLogger().severe("DAMAGED MODEL CALLED WITHOUT BEING FINISHED, ABORTING OPERATION.\nThis could be due to a improperly generated damage model\nFOR DEVELOPERS: try calling DamageModel.finished() on the damagemodel");
+            return new ImpactOutData(-1, -1);
+        }
+        ImpactOutData data = new ImpactOutData(-1, -1);
+
+        double mx = vx-x;
+        //System.out.println(mx + " | "+x+" - "+vx);
+        double my = vy-y;
+        //System.out.println(my + " | "+y+" - "+vy);
+        double mz = vz-z;
+        //System.out.println(mz + " | "+z+" - "+vz);
+
+        double damage = 0;
+        for (ArmourPlate plate : armour){
+            double distance = (square((plate.x+(plate.xsize/2))-mx)+square((plate.y+(plate.ysize/2))-my)+square((plate.z+(plate.zsize/2))-mz));
+            if (distance < power){
+                double change = plate.penDef*0.75-plate.weakness;
+                plate.weakness = plate.penDef*0.75;
+                damage += change;
+            }
+        }
+
+        double totalHealth = 0;
+        List<Component> comps = new ArrayList<>();
+        for (Component comp : components){
+            double distance = (square((comp.x+(comp.xsize/2))-mx)+square((comp.y+(comp.ysize/2))-my)+square((comp.z+(comp.zsize/2))-mz));
+            if (distance < power){
+                comps.add(comp);
+                totalHealth += comp.health;
+            }
+        }
+        double damageEach = (totalHealth/damage)/comps.size();
+        for (Component comp : comps){
+            comp.health -= damageEach;
+            if (comp.type == ComponentType.PLAYER){
+                data.setPlayerDamage((int) getPosRand(rand, 0.5));
+            }
+            if (comp.health <= 0){
+                comp.destroyed = true;
+                if (comp.destroys) {
+                    data.setDestroyedIndex(components.indexOf(comp));
+                    return data;
+                }
+            }
+        }
+
+        player.sendMessage("Exploded Target!");
+
+
+        //dist = ((x2 - x1)2 + (y2 - y1)2 + (z2 - z1)2)1/2
+        /*for (ArmourPlate plate : armour){
+            double damage = Math.max((strength/2)-(2*((square((plate.x+(plate.xsize/2))-mx)+square((plate.y+(plate.ysize/2))-my)+square((plate.z+(plate.zsize/2))-mz)))), 0);
+            plate.weakness += damage;
+            strength -= damage;
+        }
+
+        for (Component comp : components){
+            comp.health -= getPosRand(rand, 0.2);
+            double damage = Math.max((strength/8)-(((square((comp.x+(comp.xsize/2))-mx)+square((comp.y+(comp.ysize/2))-my)+square((comp.z+(comp.zsize/2))-mz)))), 0);
+            comp.health -= damage;
+            strength -= damage;
+
+            if (comp.type == ComponentType.PLAYER){
+                data.setPlayerDamage((int) getPosRand(rand, 0.5));
+            }
+            if (comp.health <= 0){
+                comp.destroyed = true;
+                if (comp.destroys) {
+                    data.setDestroyedIndex(comp.destroyableIndex);
+                    return data;
+                }
+            }
+        }*/
+        return data;
+    }
+
+    public double square(double inp){
+        return inp*inp;
+    }
+
     public double getRand(Random rand, double mult){
-        return ((rand.nextDouble()-0.5)*mult);
+        return (rand.nextDouble()-0.5)*mult;
+    }
+    public double getPosRand(Random rand, double mult){
+        return rand.nextDouble()*mult;
     }
 
     public boolean isInUpperHalf(VectorD vec){
@@ -373,6 +463,7 @@ public class DamageModel implements Cloneable{
             Bukkit.getLogger().severe("DAMAGED MODEL CALLED AFTER BEING FINISHED, ABORTING ACTION .addComponent().\nThis cannot be called after the model is finished.");
             return;
         }
+        System.out.println(comp.type);
         components.add(comp);
     }
 
@@ -383,6 +474,15 @@ public class DamageModel implements Cloneable{
                 comp.spawnDamageParticle(world, rand, turrYaw,vPos);
             } else {
                 comp.spawnDamageParticle(world, rand, bodyYaw,vPos);
+            }
+        }
+        for (ArmourPlate plate : armour){
+            if (plate.weakness > plate.penDef/4) {
+                if (plate.upper) {
+                    plate.createRandomParticle(rand, world, turrYaw, vPos, Particle.ASH);
+                } else {
+                    plate.createRandomParticle(rand, world, bodyYaw, vPos, Particle.ASH);
+                }
             }
         }
     }
@@ -466,7 +566,13 @@ public class DamageModel implements Cloneable{
         return components;
     }
 
+    public void setArmour(List<ArmourPlate> armour) {
+        this.armour = armour;
+    }
 
+    public void setComponents(List<Component> components) {
+        this.components = components;
+    }
 
     @Override
     public String toString() {
@@ -572,5 +678,27 @@ public class DamageModel implements Cloneable{
 
     public List<Integer> getComponentIndices(ComponentType type){
         return compMap.get(type);
+    }
+
+    public float getAllArmourDamage(){
+        float out = 0;
+        for (ArmourPlate plate : armour){
+            out += plate.weakness;
+        }
+        return out;
+    }
+
+    /**
+     * Gets percent 0.0 - 1.0 of damage taken across all components
+     * @return percentage of 0.0 - 1.0
+     */
+    public float getAllComponentDamage(){
+        float damage = 0;
+        float maxHealth = 0;
+        for (Component comp : components){
+            damage += comp.maxHealth-comp.health;
+            maxHealth += comp.maxHealth;
+        }
+        return damage/maxHealth;
     }
 }

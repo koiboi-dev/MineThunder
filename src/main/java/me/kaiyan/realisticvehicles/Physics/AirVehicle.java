@@ -4,6 +4,10 @@ import com.comphenix.protocol.PacketType;
 import com.comphenix.protocol.events.ListenerPriority;
 import com.comphenix.protocol.events.PacketAdapter;
 import com.comphenix.protocol.events.PacketEvent;
+import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
+import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
+import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
 import org.bukkit.*;
@@ -12,6 +16,7 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
+import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
@@ -28,10 +33,17 @@ public class AirVehicle {
     // In m/t
     protected int speed = 0;
 
-    public final AirVehicleSettings settings;
+    private DamageModel damageModel;
 
-    public AirVehicle(Location loc, AirVehicleSettings settings) {
+    public final AirVehicleSettings settings;
+    private boolean hasFuel;
+
+    public AirVehicle(Location loc, AirVehicleSettings settings) throws InvalidTypeException {
+        if (settings == null){
+            throw new InvalidTypeException("AIR");
+        }
         this.settings = settings;
+        damageModel = settings.getDamageModel().clone();
         world = loc.getWorld();
         this.loc = loc;
     }
@@ -41,18 +53,18 @@ public class AirVehicle {
         this.seatEnt = seatEnt;
         if (packetSender == null) {
             RealisticVehicles.protocolManager.addPacketListener(new PacketAdapter(RealisticVehicles.getInstance(),
-                    ListenerPriority.HIGH,
+                    ListenerPriority.MONITOR,
                     PacketType.Play.Client.STEER_VEHICLE) {
                 @Override
                 public void onPacketReceiving(PacketEvent event) {
                     if (seatEnt.getPassengers().size() != 0) {
                         if (seatEnt.getPassengers().get(0) == event.getPlayer()) {
                             acceling = false;
-                            if (event.getPacket().getFloat().getValues().get(1) > 0) {
+                            if (event.getPacket().getFloat().getValues().get(1) > 0 && hasFuel) {
                                 accelerate(settings.getEnginePower());
                                 acceling = true;
                             } else if (event.getPacket().getFloat().getValues().get(1) < 0) {
-                                accelerate(-settings.getEnginePower());
+                                accelerate(-settings.getEnginePower()/4);
                                 acceling = true;
                             }
                             if (event.getPacket().getFloat().getValues().get(0) > 0) {
@@ -115,33 +127,33 @@ public class AirVehicle {
 
         if (yaw > pYaw) {
             if (yaw > 90 && pYaw < -90) {
-                yawVelo += settings.getYawSpeed()*mod;
+                yawVelo += settings.getYawSpeed();
                 //yaw += settings.getYawSpeed()*mod;
                 //roll = -currentRoll;
             } else {
-                yawVelo -= settings.getYawSpeed()*mod;
+                yawVelo -= settings.getYawSpeed();
                 //yaw -= settings.getYawSpeed()*mod;
                 //roll = currentRoll;
             }
         } else if (yaw < pYaw) {
             if (yaw < -90 && pYaw > 90) {
-                yawVelo -= settings.getYawSpeed()*mod;
+                yawVelo -= settings.getYawSpeed();
                 //yaw -= settings.getYawSpeed()*mod;
                 //roll = currentRoll;
             } else {
-                yawVelo += settings.getYawSpeed()*mod;
+                yawVelo += settings.getYawSpeed();
                 //yaw += settings.getYawSpeed()*mod;
                 //roll = -currentRoll;
             }
         }
 
-        yawVelo = Math.min(settings.getMaxYawSpeed(), Math.max(-settings.getMaxYawSpeed(), yawVelo));
+        yawVelo = Math.min(settings.getMaxYawSpeed(), Math.max(-settings.getMaxYawSpeed(), yawVelo))*mod*damageModel.getComponentDamagePercent(ComponentType.AILERON);
         //roll = Math.min(15, Math.max(-15, roll));
         yawVelo *= mult;
 
         yaw += yawVelo;
 
-        if (yaw < pYaw + settings.getYawSpeed()+0.5 && yaw > pYaw - settings.getYawSpeed()+0.5) {
+        if (yaw < pYaw + settings.getMaxYawSpeed()+0.5 && yaw > pYaw - settings.getMaxYawSpeed()+0.5) {
             yaw = pYaw;
             if (roll < 1 && roll > -1) {
                 roll = 0;
@@ -150,15 +162,19 @@ public class AirVehicle {
             }
             yawVelo = 0;
         } else if (!skipRoll){
-            roll = (yawVelo/settings.getMaxYawSpeed())*20;
+            roll = (yawVelo/settings.getFullYawSpeed())*20;
         }
 
         mod = Math.min(getSpeed()/settings.getFullPitchSpeed(), 1);
 
+        float elevatorHealth = damageModel.getComponentDamagePercent(ComponentType.ELEVATOR);
         if (pPitch > pitch){
-            pitch += settings.getPitchSpeed()*mod*mult;
+            pitch += settings.getPitchSpeed()*mod*mult*elevatorHealth;
         } else if (pPitch < pitch){
-            pitch -= settings.getPitchSpeed()*mod*mult;
+            pitch -= settings.getPitchSpeed()*mod*mult*elevatorHealth;
+        }
+        if (elevatorHealth < 0.5){
+            pitch += 0.5;
         }
 
         if (pitch < pPitch + settings.getPitchSpeed()+0.5 && pitch > pPitch - settings.getYawSpeed()+0.5){
@@ -184,7 +200,7 @@ public class AirVehicle {
 
         //Crashing move system
         if (crashing){
-            addSpeed((pitch / 90) * 0.075);
+            addSpeed((pitch / 90) * 0.15);
 
             roll -= (rand.nextFloat()-0.5)*3;
 
@@ -199,7 +215,11 @@ public class AirVehicle {
             moveBy.rotateAroundX(Math.toRadians(pitch));
             moveBy.rotateAroundY(-Math.toRadians(yaw));
             moveBy.multiply(getSpeed());
-            moveBy.subtract(new Vector(0, 0.1, 0));
+            moveBy.subtract(new Vector(0, Math.max(0, Math.min(1, speed/2)), 0));
+
+            if (!getWorld().isChunkLoaded((int) Math.floor(loc.clone().add(moveBy).getX()/16), (int) Math.floor(loc.clone().add(moveBy).getZ()/16))){
+                return;
+            }
 
             loc.add(moveBy);
 
@@ -227,7 +247,7 @@ public class AirVehicle {
         }
 
         if (!collided) {
-            addSpeed((pitch / 90) * 0.075);
+            addSpeed((pitch / 90) * 0.25);
             float yFall = (float) (0.75f-((getSpeed()/settings.getLiftSpeed()*0.6)));
             yFall = Math.max(0, yFall);
 
@@ -280,7 +300,19 @@ public class AirVehicle {
                 loc = hit.getHitPosition().toLocation(world);
                 collided = true;
                 //TODO damage landing gear on harsh roll at impact
-                if (ySpeed > 0.3){
+                if (damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR) == 0){
+                    startCrashing();
+                }
+                if (roll > 1){
+                    for (Integer anInt : damageModel.getComponentIndices(ComponentType.LANDINGGEAR)) {
+                        Component comp = damageModel.getComponents().get(anInt);
+                        comp.health -= (1 - (roll / 45)) * 0.1;
+                        if (comp.health <= 0){
+                            comp.destroyed = true;
+                        }
+                    }
+                }
+                if (ySpeed < -0.2){
                     startCrashing();
                 }
                 roll = 0;
@@ -310,8 +342,8 @@ public class AirVehicle {
         return yaw;
     }
 
-    public double getRoll() {
-        return roll;
+    public float getRoll() {
+        return (float) roll;
     }
     public void multiplyRoll(float mult){
         roll *= mult;
@@ -371,5 +403,21 @@ public class AirVehicle {
 
     public void setCrashed(boolean crashed) {
         this.crashed = crashed;
+    }
+
+    public DamageModel getDamageModel() {
+        return damageModel;
+    }
+
+    public void setDamageModel(DamageModel damageModel) {
+        this.damageModel = damageModel;
+    }
+
+    public boolean isHasFuel() {
+        return hasFuel;
+    }
+
+    public void setHasFuel(boolean hasFuel) {
+        this.hasFuel = hasFuel;
     }
 }

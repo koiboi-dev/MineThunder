@@ -1,12 +1,14 @@
 package me.kaiyan.realisticvehicles.Vehicles;
 
-import me.kaiyan.realisticvehicles.Counters.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.Counters.Updates;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
+import me.kaiyan.realisticvehicles.DataTypes.*;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.DataTypes.FuelTank;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
+import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
 import me.kaiyan.realisticvehicles.ModelHandlers.Model;
 import me.kaiyan.realisticvehicles.Physics.AirVehicle;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
@@ -24,30 +26,29 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
-public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdate{
-    DamageModel damageModel;
+public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdate, RadarTarget{
 
     //private final Entity baseEnt;
-    private Model model;
+    private final Model model;
     private final Entity seatEnt;
     private Player seatedPlayer;
-
-    private final String id;
 
     private final FuelTank fuelTank;
 
     private int bullets = 50;
 
-    public Aircraft(Location loc, String type) {
-        super(loc, Objects.requireNonNull(AirVehicleSettings.getAirVehicleSettings(type)));
-        World world = loc.getWorld();
+    private final MissileHolder missiles;
 
-        id = UUID.randomUUID().toString();
+    private boolean landingGearExtended;
+
+    public static final int TRIGGER_SLOT = 0;
+    public static final int FIRE_MISSILE_SLOT = 2;
+
+    public Aircraft(Location loc, String type) throws InvalidTypeException {
+        super(loc, AirVehicleSettings.getAirVehicleSettings(type));
+        World world = loc.getWorld();
 
         assert world != null;
         //this.baseEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID());
@@ -69,11 +70,22 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         meta.setDisplayName("Gun Trigger");
         meta.setLore(Collections.singletonList("Used to shoot with the plane"));
         trigger.setItemMeta(meta);
-        inv.setItem(0, trigger);
+        inv.setItem(TRIGGER_SLOT, trigger);
+
+        ItemStack missile = new ItemStack(Material.WOODEN_HOE);
+        ItemMeta mmeta = trigger.getItemMeta();
+        assert mmeta != null;
+        mmeta.setDisplayName("Selected: NONE");
+        mmeta.setLore(List.of("Currently selected firing pylon.", "Fires the missile in the selected pylon", "When Right Clicked"));
+        missile.setItemMeta(mmeta);
+        inv.setItem(FIRE_MISSILE_SLOT, missile);
 
         this.inv = inv;
 
-        damageModel = settings.getDamageModel().clone();
+        MissileHolder missiles1 = new MissileHolder();
+        //add missile slos
+        missiles1.addMissileSlots(settings.getMissileSlots());
+        missiles = missiles1.deepClone();
 
         fuelTank = new FuelTank(settings);
 
@@ -90,35 +102,58 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         if (seatEnt.getPassengers().size() != 0){
             seatedPlayer = (Player) seatEnt.getPassengers().get(0);
         } else {
+            if (invOwner != null && playerInv != null){
+                invOwner.setInvulnerable(false);
+                invOwner.getInventory().clear();
+                invOwner.getInventory().setContents(playerInv);
+                invOwner = null;
+                playerInv = null;
+            }
             seatedPlayer = null;
         }
+        setHasFuel(!(fuelTank.getFuel() <= 0));
 
         //((CraftArmorStand) baseEnt).getHandle().b(getLoc().getX(), getLoc().getY(), getLoc().getZ(), getVehicleYaw(), 0);
         //((CraftArmorStand) seatEnt).getHandle().b(getLoc().getX(), getLoc().getY()-0.8, getLoc().getZ(), getVehicleYaw(), 0);
         //((CraftArmorStand) baseEnt).setHeadPose(new EulerAngle(Math.toRadians(getVehiclePitch()), 0, -Math.toRadians(getRoll())));
         //((CraftArmorStand) seatEnt).setHeadPose(new EulerAngle(Math.toRadians(getVehiclePitch()), 0, -Math.toRadians(getRoll())));
 
-        model.updatePositions(getLoc(), getVehiclePitch(), getVehicleYaw(), (float) getRoll());
+        model.updatePositions(getLoc(), getVehiclePitch(), getVehicleYaw(), getRoll());
+        if (missiles != null){
+            missiles.updateHeldMissilePosition(getLoc(), getVehicleYaw(), getVehiclePitch(), getRoll());
+        }
 
         update();
 
         Vector vec = new Vector(0, 0, 1).rotateAroundZ(Math.toRadians(getPitch())).rotateAroundY(Math.toRadians(getYaw()));
-        RayTraceResult otherHit = getWorld().rayTraceBlocks(getLoc().clone().add(new Vector(0, 0.5, 0)), vec, getSpeed()+0.5);
+        RayTraceResult otherHit = getWorld().rayTraceBlocks(getLoc().clone().add(new Vector(0, 0.5, 0)), vec, getSpeed()+0.5, FluidCollisionMode.ALWAYS);
         if (otherHit != null){
             if (Objects.requireNonNull(otherHit.getHitBlock()).getType().isSolid()){
                 if (isCrashing()){
                     float crashChange = (float) (getSpeed()*Math.max(0.25,Math.random()*0.5));
                     removeCrashingHealth(crashChange);
                     addSpeed(-crashChange);
-                    addPitch((float) ((getSpeed()/0.75)*5));
+                    addPitch((float) ((getSpeed()/2)*5));
                     multiplyRoll(0.5f);
                     getWorld().createExplosion(getLoc(), (float) (settings.getWeight()+(getSpeed()/settings.getWeight())));
-                    if (getSpeed() < 0.5) {
+                    if (seatedPlayer != null && seatedPlayer.getHealth() <= 0){
+                        Updates.expectedDeaths.put(seatedPlayer, new DeathMessage(seatedPlayer.getName()+" crashed their plane!"));
+                    }
+                    if (getSpeed() < 1) {
                         explode();
                     }
                 } else if (getSpeed() > settings.getStallSpeed()) {
                     startCrashing();
                     getWorld().createExplosion(getLoc(), (float) (settings.getWeight()+(getSpeed()/settings.getWeight())));
+                } else {
+                    Vector dir;
+                    if (speed >= 0){
+                        dir = new Vector(-Math.sin(Math.toRadians(getYaw())), 0, Math.cos(Math.toRadians(getYaw())));
+                    } else {
+                        dir = new Vector(-Math.sin(Math.toRadians(getYaw()+180)), 0, Math.cos(Math.toRadians(getYaw()+180)));
+                    }
+
+                    getLoc().add(dir.clone().multiply(settings.getLength() - getLoc().distance(otherHit.getHitPosition().toLocation(getWorld()))));
                 }
             } else if (otherHit.getHitBlock().isLiquid()){
                 explode();
@@ -126,24 +161,23 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         }
         if (isCrashed()){
             getWorld().createExplosion(getLoc(), (float) (settings.getWeight()*2));
-            closeThis();
+            closeThis(false);
         }
 
         fuelTank.removeFuelWithDensity(getFuelTank().getIdleFuelConsumptionRate());
         if (isAcceling()){
             fuelTank.removeFuelWithDensity(getFuelTank().getFuelConsumptionRate());
         }
-        for (int i : damageModel.getComponentIndices(ComponentType.FUEL)){
-            if (damageModel.getComponents().get(i).health < damageModel.getComponents().get(i).damageHealth){
+        for (int i : getDamageModel().getComponentIndices(ComponentType.FUEL)){
+            if (getDamageModel().getComponents().get(i).health < getDamageModel().getComponents().get(i).damageHealth){
                 fuelTank.removeFuel(getFuelTank().getFuelLeakAmount()/2);
-            } else if (damageModel.getComponents().get(i).health < damageModel.getComponents().get(i).criticalHealth){
+            } else if (getDamageModel().getComponents().get(i).health < getDamageModel().getComponents().get(i).criticalHealth){
                 fuelTank.removeFuel(getFuelTank().getFuelLeakAmount());
             }
         }
-
         tryFiring();
         displayActionBar();
-        damageModel.showDamageParticles(getWorld(), getVehicleYaw(), getVehiclePitch(), getLoc().toVector());
+        getDamageModel().showDamageParticles(getWorld(), getVehicleYaw(), getVehiclePitch(), getLoc().toVector());
     }
 
     private boolean firing = false;
@@ -182,10 +216,47 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         lastFiredTick++;
     }
 
+    private int selectedPylon = -1;
+    public void attemptFireMissile(){
+        missiles.fireMissile(selectedPylon, getLoc(), getVehicleYaw(), getVehiclePitch(), getRoll(), (float) getSpeed(), this, seatedPlayer);
+    }
+
+    public void updateMissileItem(){
+        if (seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT) != null && missiles.getMissiles().get(selectedPylon).getSettings() != null){
+            ItemStack item = seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT);
+            if (item == null){
+                return;
+            }
+            ItemMeta meta = item.getItemMeta();
+            assert meta != null;
+            meta.setDisplayName("Selected: "+missiles.getMissiles().get(selectedPylon).getSettings().getName());
+            meta.setCustomModelData(missiles.getMissiles().get(selectedPylon).getSettings().getTexID());
+            item.setItemMeta(meta);
+            System.out.println("Updated!");
+        }
+    }
+
+    Player invOwner = null;
     ItemStack[] playerInv;
     final Inventory inv;
     boolean exited = true;
 
+    public int getSelectedPylon() {
+        return selectedPylon;
+    }
+
+    public void setSelectedPylon(int selectedPylon) {
+        this.selectedPylon = selectedPylon;
+    }
+
+    public void cyclePylon(){
+        selectedPylon += 1;
+        if (selectedPylon > missiles.getMissiles().size()-1){
+            selectedPylon = 0;
+        }
+    }
+
+    boolean wasCreative = false;
     @Override
     public void playerEnteredVehicle(Player p) {
         exited = false;
@@ -194,17 +265,28 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
             playerInv = p.getInventory().getContents();
             p.getInventory().clear();
             p.getInventory().setContents(inv.getContents());
+            wasCreative = p.getGameMode() == GameMode.CREATIVE;
+            p.setGameMode(GameMode.SURVIVAL);
+            invOwner = p;
         }
     }
 
     @Override
     public void playerExitedVehicle(boolean skipEject) {
-        RealisticVehicles.debugLog("Exit");
-        if (seatedPlayer != null && !exited) {
+        /*if (seatedPlayer != null && !exited) {
             exited = true;
+            RealisticVehicles.debugLog("Exit");
             seatedPlayer.setInvulnerable(false);
             seatedPlayer.getInventory().clear();
             seatedPlayer.getInventory().setContents(playerInv);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (wasCreative){
+                        seatedPlayer.setGameMode(GameMode.CREATIVE);
+                    }
+                }
+            }.runTaskLater(RealisticVehicles.getInstance(), 1);
             if (!skipEject) {
                 new BukkitRunnable() {
                     @Override
@@ -216,7 +298,62 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                 }.runTaskLater(RealisticVehicles.getInstance(), 1);
             }
             playerInv = null;
+            invOwner = null;
+        }*/
+        exited = true;
+        if (!skipEject){
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (wasCreative && seatedPlayer != null){
+                        seatedPlayer.setGameMode(GameMode.CREATIVE);
+                    }
+                }
+            }.runTaskLater(RealisticVehicles.getInstance(), 1);
+            new BukkitRunnable() {
+                @Override
+                public void run() {
+                    if (seatEnt.getPassengers().size() != 0) {
+                        seatEnt.eject();
+                    }
+                }
+            }.runTaskLater(RealisticVehicles.getInstance(), 1);
         }
+    }
+
+    @Override
+    public void closeThis(boolean delStands) {
+        FixedUpdate.super.closeThis(false);
+        if (invOwner != null) {
+            invOwner.setInvulnerable(false);
+            invOwner.getInventory().clear();
+            invOwner.getInventory().setContents(playerInv);
+        }
+        if (delStands) {
+            model.clearAll();
+        } else {
+            model.scrapStands();
+        }
+    }
+
+    @Override
+    public void scrap(boolean delete) {
+        closeThis(delete);
+    }
+
+    @Override
+    public List<TrailerHitch> getTrailerHitches() {
+        return null;
+    }
+
+    @Override
+    public List<MissileSettings> getValidMissiles() {
+        return settings.getMissiles();
+    }
+
+    @Override
+    public MissileHolder getMissileHolder() {
+        return missiles;
     }
 
     @Override
@@ -231,7 +368,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
 
     @Override
     public DamageModel getDamageModel() {
-        return damageModel;
+        return super.getDamageModel();
     }
 
     @Override
@@ -248,7 +385,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     public void explode() {
         getWorld().createExplosion(getLoc(), (float) (settings.getWeight()+(getSpeed()/settings.getWeight())));
         playerExitedVehicle(false);
-        closeThis();
+        closeThis(false);
     }
 
     @Override
@@ -272,8 +409,8 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     }
 
     @Override
-    public String getID() {
-        return id;
+    public int getTexId() {
+        return settings.getTextureID();
     }
 
     @Override
@@ -304,6 +441,29 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
 
     @Override
     public void flashModel() {
-        damageModel.flashAll(seatEnt.getWorld(), getLoc());
+        getDamageModel().flashAll(seatEnt.getWorld(), getLoc());
+    }
+
+    @Override
+    public VehicleType getVehicleType() {
+        return VehicleType.AIR;
+    }
+
+    @Override
+    public VehicleInterface getVehicleInterface() {
+        return this;
+    }
+
+    @Override
+    public boolean hasArmourStand(ArmorStand stand) {
+        return model.containsStand(stand);
+    }
+
+    public int getBullets() {
+        return bullets;
+    }
+
+    public void setBullets(int bullets) {
+        this.bullets = bullets;
     }
 }

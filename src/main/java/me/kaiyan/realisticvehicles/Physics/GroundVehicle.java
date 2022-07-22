@@ -30,7 +30,6 @@ public class GroundVehicle {
     private boolean hasFuel = true;
 
     private Entity baseSeat;
-    private Entity base;
 
     public VehiclePacket vPacket;
 
@@ -41,8 +40,7 @@ public class GroundVehicle {
         this.settings = settings;
     }
 
-    public void setup(Entity base, Entity seat, @Nullable VehiclePacket packetSender){
-        this.base = base;
+    public void setup(Entity seat, @Nullable VehiclePacket packetSender){
         baseSeat = seat;
         if (packetSender == null) {
             RealisticVehicles.protocolManager.addPacketListener(new PacketAdapter(RealisticVehicles.getInstance(),
@@ -130,10 +128,12 @@ public class GroundVehicle {
         RayTraceResult motionCheck = Objects.requireNonNull(loc.getWorld()).rayTraceBlocks(loc, dir, settings.getLength(), FluidCollisionMode.NEVER);
 
         if (motionCheck != null && motionCheck.getHitBlock() != null) {
-            //Hit
-            //TODO Add Traversables.
-            if (motionCheck.getHitBlock().getRelative(BlockFace.UP).getType() != Material.AIR && motionCheck.getHitBlock().getRelative(BlockFace.UP).getType().isSolid()) {
-                loc.subtract(dir.clone().multiply(settings.getLength() - loc.distance(motionCheck.getHitPosition().toLocation(base.getWorld()))));
+            if (getTraversable() == Traversable.BLOCK && (motionCheck.getHitBlock().getRelative(BlockFace.UP).getType().isSolid())) {
+                pushAgainstHit(dir, motionCheck);
+            } else if (getTraversable() == Traversable.SLAB && (!motionCheck.getHitBlock().getType().toString().contains("SLAB") || motionCheck.getHitBlock().getRelative(BlockFace.UP).getType().isSolid())){
+                pushAgainstHit(dir, motionCheck);
+            } else if (getTraversable() == Traversable.NONE){
+                pushAgainstHit(dir, motionCheck);
             }
         }
 
@@ -146,6 +146,10 @@ public class GroundVehicle {
             loc.add(new Vector(0, -0.5, 0));
             onGround = false;
         }
+    }
+
+    public void pushAgainstHit(Vector dir, RayTraceResult motionCheck){
+        loc.subtract(dir.clone().multiply(settings.getLength() - loc.distance(motionCheck.getHitPosition().toLocation(baseSeat.getWorld()))));
     }
 
     public void steer(double amount){
@@ -245,9 +249,5 @@ public class GroundVehicle {
 
     public Entity getBaseSeat() {
         return baseSeat;
-    }
-
-    public Entity getBase() {
-        return base;
     }
 }

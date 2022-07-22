@@ -1,12 +1,19 @@
 package me.kaiyan.realisticvehicles.Vehicles.Settings;
 
+import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.FuelTank;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import org.bukkit.util.Vector;
 
 public class VehicleSettings {
     final String type;
     final int textureID;
     Vector seatPos;
+    VehicleType vtype;
+
+    DamageModel damageModel;
 
     private double startFuel;
     private double fuelConsumptionRate;
@@ -14,9 +21,13 @@ public class VehicleSettings {
     private double maxFuel;
     private double leakFuelAmount;
 
-    public VehicleSettings(String type, int textureID) {
+    private double width = 1;
+    private double length = 1;
+
+    public VehicleSettings(String type, int textureID, VehicleType vtype) {
         this.type = type;
         this.textureID = textureID;
+        this.vtype = vtype;
     }
 
     public String getType() {
@@ -41,6 +52,11 @@ public class VehicleSettings {
         this.idleFuelConsumptionRate = idleFuelConsumption;
         this.maxFuel = maxFuel;
         this.leakFuelAmount = leakFuelAmount;
+    }
+
+    public void setSize(float width, float length){
+        this.width = width;
+        this.length = length;
     }
 
     public Vector getSeatPos() {
@@ -69,5 +85,67 @@ public class VehicleSettings {
 
     public double getLeakFuelAmount() {
         return leakFuelAmount;
+    }
+
+    public double getWidth() {
+        return width;
+    }
+
+    public double getLength() {
+        return length;
+    }
+
+    public void setStartFuel(double startFuel) {
+        this.startFuel = startFuel;
+    }
+
+    public void setFuelConsumptionRate(double fuelConsumptionRate) {
+        this.fuelConsumptionRate = fuelConsumptionRate;
+    }
+
+    public void setIdleFuelConsumptionRate(double idleFuelConsumptionRate) {
+        this.idleFuelConsumptionRate = idleFuelConsumptionRate;
+    }
+
+    public void setMaxFuel(double maxFuel) {
+        this.maxFuel = maxFuel;
+    }
+
+    public void setLeakFuelAmount(double leakFuelAmount) {
+        this.leakFuelAmount = leakFuelAmount;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
+    public void setLength(double length) {
+        this.length = length;
+    }
+
+    public VehicleType getVtype() {
+        return vtype;
+    }
+
+    public DamageModel getDamageModel() {
+        return damageModel;
+    }
+
+    public void setDamageModel(DamageModel damageModel) {
+        this.damageModel = damageModel;
+    }
+
+    public static VehicleSettings getSettingsFromType(String type){
+        for (VehicleSettings settings : AirVehicleSettings.registers){
+            if (settings.getType().equals(type)){
+                return settings;
+            }
+        }
+        for (VehicleSettings settings : TankSettings.getRegister()){
+            if (settings.getType().equals(type)){
+                return settings;
+            }
+        }
+        return null;
     }
 }

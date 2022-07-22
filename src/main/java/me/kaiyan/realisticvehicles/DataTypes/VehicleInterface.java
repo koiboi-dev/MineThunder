@@ -3,10 +3,14 @@ package me.kaiyan.realisticvehicles.DataTypes;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
+import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
+import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import org.bukkit.Location;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+
+import java.util.List;
 
 public interface VehicleInterface {
     Location getLoc();
@@ -20,7 +24,7 @@ public interface VehicleInterface {
     FuelTank getFuelTank();
     VehicleType getType();
     String getNameType();
-    String getID();
+    int getTexId();
     void displayActionBar();
 
     Entity getBaseSeat();
@@ -30,4 +34,15 @@ public interface VehicleInterface {
     void addShells(int shellIndex, int amount);
     void playerEnteredVehicle(Player p);
     void playerExitedVehicle(boolean skipEject);
+
+    List<MissileSettings> getValidMissiles();
+    MissileHolder getMissileHolder();
+
+    default boolean hasArmourStand(ArmorStand stand){
+        return false;
+    }
+
+    void scrap(boolean delete);
+
+    List<TrailerHitch> getTrailerHitches();
 }

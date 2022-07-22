@@ -1,12 +1,9 @@
 package me.kaiyan.realisticvehicles.Physics;
 
-import me.kaiyan.realisticvehicles.Counters.FixedUpdate;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
-import me.kaiyan.realisticvehicles.Counters.Updates;
+import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -68,7 +65,7 @@ public class ProjectileShell extends Shell implements FixedUpdate {
     @Override
     public void OnFixedUpdate() {
         if (loops >= 60) {
-            closeThis();
+            closeThis(false);
             return;
         }
 
@@ -83,7 +80,7 @@ public class ProjectileShell extends Shell implements FixedUpdate {
 
         if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()) {
             loc.getWorld().createExplosion(loc, 2, false, false);
-            closeThis();
+            closeThis(false);
         }
         /*if(!loc.getChunk().isLoaded()) {
             closeThis();

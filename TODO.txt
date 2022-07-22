@@ -1,0 +1,28 @@
+Update Ground Vehicles:
+- Test collisions
+- Multicrew tanks?
+- TANK SHELL REBALANCE
+- Trailers.
+
+General Fixes:
+/ optimizations
+/ run on different server hardware
+- playtest
+
+Vehicle Management:
+- add shop.
+
+Balancing:
+- extend takeoff / landing distances
+- rebalance damage model numbers?
+
+TODO ADD NEW THE NEW VEHICLES!
+
+SAVED CODE:
+
+public static float getYawDifference(float start, float end){
+        float result = (end - start) % 360;
+        if(result < 0) result += 360;
+        result -= (result > 180 ? 360 : 0);
+        return result;
+    }

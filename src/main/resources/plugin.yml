@@ -22,10 +22,6 @@ load: POSTWORLD
 ## This is the minimum minecraft version required to run your plugin.
 api-version: 1.14
 
-## increase entity view dist
-entity-tracking-range:
-    armour_stand: 128
-
 depend: [ProtocolLib, Vault]
 
 commands:

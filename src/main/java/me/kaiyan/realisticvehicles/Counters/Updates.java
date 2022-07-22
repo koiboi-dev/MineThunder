@@ -1,18 +1,16 @@
 package me.kaiyan.realisticvehicles.Counters;
 
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
+import me.kaiyan.realisticvehicles.DataTypes.DeathMessage;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
+import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
 import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
-import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
-import org.bukkit.ChatColor;
-import org.bukkit.entity.Entity;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.EntityDamageEvent;
 
 import java.util.*;
-import java.util.function.Predicate;
 
 public class Updates {
     public static List<FixedUpdate> fixedUpdates = new ArrayList<>();
@@ -20,6 +18,7 @@ public class Updates {
     public static void addListener(FixedUpdate update){
         fixedUpdates.add(update);
     }
+    public static HashMap<Player, DeathMessage> expectedDeaths = new HashMap<>();
 
     public static void triggerFixedUpdate(){
         try {
@@ -27,6 +26,16 @@ public class Updates {
                 if (update != null) {
                     update.OnFixedUpdate();
                 }
+            }
+            List<Player> remove = new ArrayList<>();
+            for (Map.Entry<Player, DeathMessage> message: expectedDeaths.entrySet()){
+                if (message.getValue().getAliveTime() > 2){
+                    remove.add(message.getKey());
+                }
+                message.getValue().addAliveTime(1);
+            }
+            for (Player player : remove){
+                expectedDeaths.remove(player);
             }
             calculateShellImpacts();
         } catch (ConcurrentModificationException ignore){
@@ -69,7 +78,14 @@ public class Updates {
             for (ProjectileShell shell : boundingShells){
                 System.out.println("Hit");
                 ImpactOutData data = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.getYaw(), shell.getPitch(), shell.loc.getWorld(), 0, true, shell.player);
-                shell.closeThis();
+                shell.closeThis(false);
+
+                if (data.getPlayerDamage() != 0 && vehicle.getSeatedPlayer() != null){
+                    if (!(vehicle.getSeatedPlayer().getHealth() - data.getPlayerDamage() > 0)) {
+                        expectedDeaths.put(vehicle.getSeatedPlayer(), new DeathMessage(vehicle.getSeatedPlayer().getName() + " was killed in a " + vehicle.getNameType() + " by " + shell.player.getName() + " in a " + Objects.requireNonNull(getPlayerVehicle(shell.player)).getNameType()));
+                    }
+                    vehicle.getSeatedPlayer().damage(data.getPlayerDamage());
+                }
                 if (data.getDestroyedIndex() == -1){
                     continue;
                 }
@@ -80,19 +96,9 @@ public class Updates {
                 } else if (comp.type == ComponentType.AMMOSTOWAGE){
                     vehicle.fizzleAmmo(data.getDestroyedIndex());
                 }
-                if (data.getPlayerDamage() == 0){
-                    continue;
-                }
-                if (vehicle.getSeatedPlayer() != null){
-                    if (!(vehicle.getSeatedPlayer().getHealth() - data.getPlayerDamage() > 0)) {
-                        expectedDeaths.put(vehicle.getSeatedPlayer(), vehicle.getSeatedPlayer() + " was killed in a " + vehicle.getNameType() + " by " + shell.player + " in a " + getPlayerVehicle(shell.player).getNameType());
-                    }
-                    vehicle.getSeatedPlayer().damage(data.getPlayerDamage());
-                }
             }
         }
     }
-    public static HashMap<Player, String> expectedDeaths = new HashMap<>();
 
     /*public static void getShellImpact(VehicleInterface vehicle){
         for (FixedUpdate update : fixedUpdates){
@@ -110,21 +116,10 @@ public class Updates {
         }
     }*/
 
-    public static VehicleInterface getVehicleFromSeat(Entity seatEnt){
+    public static VehicleInterface getVehicleFromStand(ArmorStand seatEnt){
         for (FixedUpdate update : fixedUpdates){
             if (update instanceof VehicleInterface inter){
-                if (inter.getBaseSeat().getUniqueId() == seatEnt.getUniqueId()){
-                    return inter;
-                }
-            }
-        }
-        return null;
-    }
-
-    public static VehicleInterface getVehicleFromId(String id){
-        for (FixedUpdate update : fixedUpdates){
-            if (update instanceof VehicleInterface inter){
-                if (Objects.equals(inter.getID(), id)){
+                if (inter.getBaseSeat().getUniqueId() == seatEnt.getUniqueId() || inter.hasArmourStand(seatEnt)){
                     return inter;
                 }
             }

@@ -1,5 +1,6 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
+import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 
 public class FuelTank {
@@ -81,5 +82,9 @@ public class FuelTank {
 
     public void removeFuelWithDensity(double fuel){
         this.fuel -= fuel/getLoadedFuelType().getFuelDensity();
+    }
+
+    public String toJson(){
+        return new Gson().toJson(this);
     }
 }

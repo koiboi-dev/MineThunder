@@ -1,7 +1,8 @@
 package me.kaiyan.realisticvehicles.DataTypes.Enums;
 
 public enum VehicleType{
-    GROUND,
+    TANK,
+    CAR,
     AIR,
     SEA
 }

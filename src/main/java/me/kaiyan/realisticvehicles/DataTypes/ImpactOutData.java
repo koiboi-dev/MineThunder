@@ -29,6 +29,4 @@ public class ImpactOutData {
     public void addPlayerDamage(int damage){
         playerDamage += damage;
     }
-
-
 }
