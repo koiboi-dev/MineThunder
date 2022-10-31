@@ -1,11 +1,12 @@
 package me.kaiyan.realisticvehicles.Commands;
 
-import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.Counters.Updates;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
+import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
 import me.kaiyan.realisticvehicles.ModelHandlers.FakeRadarTarget;
 import me.kaiyan.realisticvehicles.Physics.Missile;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
@@ -21,6 +22,7 @@ import org.bukkit.entity.*;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,7 +30,7 @@ import java.util.List;
 public class TestCommands implements CommandExecutor {
 
     @Override
-    public boolean onCommand(CommandSender commandSender, Command command, String s, String[] strings) {
+    public boolean onCommand(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, String[] strings) {
         switch (strings[0]) {
             case "tank" -> {
                 try {
@@ -37,9 +39,7 @@ public class TestCommands implements CommandExecutor {
                     e.printStackTrace();
                 }
             }
-            case "flash" -> {
-                RealisticVehicles.flashing = !RealisticVehicles.flashing;
-            }
+            case "flash" -> RealisticVehicles.flashing = !RealisticVehicles.flashing;
             case "plane" -> {
                 try {
                     new Aircraft(((Player) commandSender).getLocation(), "MIG 31");
@@ -51,13 +51,11 @@ public class TestCommands implements CommandExecutor {
                 Player player = (Player)commandSender;
                 new ProjectileShell(player.getEyeLocation(), player.getLocation().getYaw(), player.getLocation().getPitch(), 5, true, 5, 2, false, false, false,false, player, Material.GLASS, Collections.singletonList(""), 0.5, 0, 0, 1);
             }
-            case "faketarget" -> {
-                new FakeRadarTarget(((Player)commandSender).getLocation());
-            }
+            case "faketarget" -> new FakeRadarTarget(((Player)commandSender).getLocation());
             case "killall" -> {
                 List<FixedUpdate> updates = new ArrayList<>(Updates.fixedUpdates);
                 for (FixedUpdate update : updates){
-                    update.closeThis(true);
+                    update.closeThis(2);
                 }
             }
             case "missile" -> {
@@ -89,6 +87,22 @@ public class TestCommands implements CommandExecutor {
             case "planei" -> {
                 Player player = (Player)commandSender;
                 player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("MIG 31", VehicleType.AIR));
+            }
+            case "truck" -> {
+                Player player = (Player) commandSender;
+                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking S3-X Truck", VehicleType.CAR));
+            }
+            case "trailer" -> {
+                Player player = (Player) commandSender;
+                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking T5 Dry Trailer", VehicleType.TRAILER));
+            }
+            case "crowbar" -> {
+                Player player = (Player) commandSender;
+                player.getInventory().addItem(ItemGenerator.getCrowbar());
+            }
+            case "shop" -> {
+                Player player = (Player) commandSender;
+                PurchaseMenu.openPurchaseMenu(player);
             }
         }
         return false;

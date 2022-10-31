@@ -1,4 +1,4 @@
-package me.kaiyan.realisticvehicles.DataTypes;
+package me.kaiyan.realisticvehicles.DataTypes.Interfaces;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import org.bukkit.Location;

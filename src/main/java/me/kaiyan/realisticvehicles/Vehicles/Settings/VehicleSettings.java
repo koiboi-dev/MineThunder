@@ -4,6 +4,7 @@ import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.FuelTank;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import org.bukkit.util.Vector;
 
@@ -12,6 +13,7 @@ public class VehicleSettings {
     final int textureID;
     Vector seatPos;
     VehicleType vtype;
+    private float price;
 
     DamageModel damageModel;
 
@@ -24,10 +26,11 @@ public class VehicleSettings {
     private double width = 1;
     private double length = 1;
 
-    public VehicleSettings(String type, int textureID, VehicleType vtype) {
+    public VehicleSettings(String type, int textureID, VehicleType vtype, float price) {
         this.type = type;
         this.textureID = textureID;
         this.vtype = vtype;
+        this.price = price;
     }
 
     public String getType() {
@@ -146,6 +149,15 @@ public class VehicleSettings {
                 return settings;
             }
         }
+        for (VehicleSettings settings : CarSettings.getRegister()){
+            if (settings.getType().equals(type)){
+                return settings;
+            }
+        }
         return null;
+    }
+
+    public float getPrice() {
+        return price;
     }
 }

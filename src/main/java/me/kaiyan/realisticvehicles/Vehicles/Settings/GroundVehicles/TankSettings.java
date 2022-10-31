@@ -2,6 +2,7 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nonnull;
@@ -22,6 +23,9 @@ public class TankSettings extends GroundVehicleSettings{
     float minPitch;
     float maxPitch;
 
+    float gunRecoilCooldown;
+    float gunRecoilSetback;
+
     DamageModel damageModel;
 
     Shell[] shells = new Shell[3];
@@ -34,8 +38,8 @@ public class TankSettings extends GroundVehicleSettings{
      *                  turret: texID+1
      *                  gun: texID+2
      */
-    public TankSettings(String type, int textureID){
-        super(type, textureID);
+    public TankSettings(String type, int textureID, float price){
+        super(type, VehicleType.TANK,textureID, price);
     }
 
     /**
@@ -52,11 +56,13 @@ public class TankSettings extends GroundVehicleSettings{
         this.machineGunPos = machineGunPos;
     }
 
-    public void setTankData(float traverseSpeed, float elevateSpeed, float minPitch, float maxPitch){
+    public void setTankData(float traverseSpeed, float elevateSpeed, float minPitch, float maxPitch, float gunRecoilCooldown, float gunRecoilSetback){
         this.traverseSpeed = traverseSpeed;
         this.elevateSpeed = elevateSpeed;
         this.minPitch = -minPitch;
         this.maxPitch = -maxPitch;
+        this.gunRecoilCooldown = gunRecoilCooldown;
+        this.gunRecoilSetback = gunRecoilSetback;
     }
 
     public void setShellData(@Nonnull Shell fshell, @Nullable Shell sshell, @Nullable Shell tshell){
@@ -127,5 +133,13 @@ public class TankSettings extends GroundVehicleSettings{
 
     public Shell[] getShells() {
         return shells;
+    }
+
+    public float getGunRecoilCooldown() {
+        return gunRecoilCooldown;
+    }
+
+    public float getGunRecoilSetback() {
+        return gunRecoilSetback;
     }
 }

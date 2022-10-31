@@ -6,6 +6,7 @@ import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
+import net.minecraft.util.Tuple;
 import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ public class AirVehicleSettings extends VehicleSettings {
 
     // kg
     private double weight;
+    private double explodeSpeed;
     private double dragCoefficient;
     private double stallSpeed;
     private double liftSpeed;
@@ -29,30 +31,33 @@ public class AirVehicleSettings extends VehicleSettings {
     private double pitchSpeed;
     private double fullPitchSpeed;
 
-    private double heatSignature;
-
     private final List<MissileSettings> missiles = new ArrayList<>();
 
     private List<Vector> gunPositions = new ArrayList<>();
     private int fireRate;
 
-    private final HashMap<int[], Integer> models = new HashMap<>();
+    private final HashMap<int[], Tuple<Integer, Integer>> models = new HashMap<>();
 
     private boolean hasRadar = false;
     private int scanAngle;
     private float scanDistance;
 
-    public AirVehicleSettings(String type, int textureID) {
-        super(type, textureID, VehicleType.AIR);
+    private final float midOffset;
+    private final boolean shiftGrid;
+
+    public AirVehicleSettings(String type, int textureID, float price, float midOffset, boolean shiftGrid) {
+        super(type, textureID, VehicleType.AIR, price);
+        this.midOffset = midOffset;
+        this.shiftGrid = shiftGrid;
     }
 
-    public void setFlightData(double weight, double enginePower, double dragCoefficient, double stallSpeed, double liftSpeed, double heatSignature){
+    public void setFlightData(double weight, double explodeSpeed, double enginePower, double dragCoefficient, double stallSpeed, double liftSpeed){
         this.weight = weight;
+        this.explodeSpeed = explodeSpeed;
         this.enginePower = enginePower;
         this.dragCoefficient = dragCoefficient;
         this.stallSpeed = stallSpeed;
         this.liftSpeed = liftSpeed;
-        this.heatSignature = heatSignature;
     }
 
     public void setControlData(double yawSpeed, double fullYawSpeed, double maxYawSpeed,double pitchSpeed, double fullPitchSpeed){
@@ -63,11 +68,11 @@ public class AirVehicleSettings extends VehicleSettings {
         this.maxYawSpeed = maxYawSpeed;
     }
 
-    public void addModelSegment(int[] coords, int modelID){
-        models.put(coords, modelID);
+    public void addModelSegment(int[] coords, int extID, int retID){
+        models.put(coords, new Tuple<>(extID, retID));
     }
 
-    public HashMap<int[], Integer> getModels() {
+    public HashMap<int[], Tuple<Integer, Integer>> getModels() {
         return models;
     }
 
@@ -197,5 +202,17 @@ public class AirVehicleSettings extends VehicleSettings {
 
     public List<MissileSlot> getMissileSlots() {
         return missileSlots;
+    }
+
+    public float getMidOffset() {
+        return midOffset;
+    }
+
+    public double getExplodeSpeed() {
+        return explodeSpeed;
+    }
+
+    public boolean isShiftGrid() {
+        return shiftGrid;
     }
 }

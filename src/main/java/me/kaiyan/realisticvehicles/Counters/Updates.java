@@ -3,9 +3,9 @@ package me.kaiyan.realisticvehicles.Counters;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DataTypes.DeathMessage;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
-import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
@@ -19,14 +19,28 @@ public class Updates {
         fixedUpdates.add(update);
     }
     public static HashMap<Player, DeathMessage> expectedDeaths = new HashMap<>();
+    public static List<FixedUpdate> toBeRemoved = new ArrayList<>();
+    public static List<FixedUpdate> toBeAdded = new ArrayList<>();
 
     public static void triggerFixedUpdate(){
         try {
+            float time = System.nanoTime();
+            List<ProjectileShell> shells = new ArrayList<>();
+            List<VehicleInterface> vehicles = new ArrayList<>();
             for (FixedUpdate update : fixedUpdates) {
                 if (update != null) {
                     update.OnFixedUpdate();
+                    if (update instanceof ProjectileShell shell){
+                        shells.add(shell);
+                    } else if (update instanceof VehicleInterface vehicle){
+                        vehicles.add(vehicle);
+                    }
                 }
             }
+            fixedUpdates.removeAll(toBeRemoved);
+            fixedUpdates.addAll(toBeAdded);
+            toBeRemoved = new ArrayList<>();
+            toBeAdded = new ArrayList<>();
             List<Player> remove = new ArrayList<>();
             for (Map.Entry<Player, DeathMessage> message: expectedDeaths.entrySet()){
                 if (message.getValue().getAliveTime() > 2){
@@ -37,9 +51,11 @@ public class Updates {
             for (Player player : remove){
                 expectedDeaths.remove(player);
             }
-            calculateShellImpacts();
-        } catch (ConcurrentModificationException ignore){
-
+            calculateShellImpacts(vehicles, shells);
+            calculateCollisions(vehicles);
+            //System.out.println("UpdateSpeed: "+((System.nanoTime()-time)/1000000)+"ms");
+        } catch (ConcurrentModificationException e){
+            e.printStackTrace();
         }
     }
 
@@ -59,26 +75,17 @@ public class Updates {
         return vehicles;
     }
 
-    public static void calculateShellImpacts(){
-        List<ProjectileShell> shells = new ArrayList<>();
-        List<VehicleInterface> vehicles = new ArrayList<>();
-
-        for (FixedUpdate update : fixedUpdates){
-            if (update instanceof ProjectileShell shell){
-                shells.add(shell);
-            } else if (update instanceof VehicleInterface vehicle){
-                vehicles.add(vehicle);
-            }
-        }
+    public static void calculateShellImpacts(List<VehicleInterface> vehicles, List<ProjectileShell> shells){
         for (VehicleInterface vehicle : vehicles){
-            List<ProjectileShell> boundingShells = shells.stream().filter(shell -> vehicle.getDamageModel().isInBoundingBox(shell.loc, vehicle.getLoc()) && shell.player != vehicle.getSeatedPlayer()).toList();
+            List<ProjectileShell> boundingShells = shells.stream().filter(shell -> shell.player != vehicle.getSeatedPlayer() && (vehicle.getDamageModel().isInBoundingBox(shell.loc, vehicle.getLoc()) || vehicle.getDamageModel().isInBoundingBox(shell.prevLoc.clone().add(shell.loc.clone().subtract(shell.prevLoc).multiply(0.5)), vehicle.getLoc()))).toList();
             if (boundingShells.size() == 0){
                 continue;
             }
             for (ProjectileShell shell : boundingShells){
+                shell.stand.remove();
                 System.out.println("Hit");
                 ImpactOutData data = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.getYaw(), shell.getPitch(), shell.loc.getWorld(), 0, true, shell.player);
-                shell.closeThis(false);
+                shell.closeThis(1);
 
                 if (data.getPlayerDamage() != 0 && vehicle.getSeatedPlayer() != null){
                     if (!(vehicle.getSeatedPlayer().getHealth() - data.getPlayerDamage() > 0)) {
@@ -91,10 +98,20 @@ public class Updates {
                 }
                 Component comp = vehicle.getDamageModel().getComponents().get(data.getDestroyedIndex());
                 if (comp.type == ComponentType.FUEL){
-                    //TODO Add Effects to fuel burnout.
                     vehicle.explode();
                 } else if (comp.type == ComponentType.AMMOSTOWAGE){
                     vehicle.fizzleAmmo(data.getDestroyedIndex());
+                }
+            }
+        }
+    }
+
+    public static void calculateCollisions(List<VehicleInterface> vehicles){
+        for (VehicleInterface vehicle : vehicles){
+            for (VehicleInterface oV : vehicles){
+                if (vehicle != oV && vehicle.getLoc().distanceSquared(oV.getLoc()) < vehicle.getDamageModel().getCollisionSphere() * vehicle.getDamageModel().getCollisionSphere()){
+                    vehicle.crash();
+                    oV.crash();
                 }
             }
         }
@@ -127,10 +144,10 @@ public class Updates {
         return null;
     }
 
-    public static VehicleInterface getPlayerVehicle(Player player){
-        for (VehicleInterface vehicle : getActiveVehicles()){
+    public static VehicleInterface getPlayerVehicle(Player player) {
+        for (VehicleInterface vehicle : getActiveVehicles()) {
             //System.out.println("Vehicle:"+vehicle);
-            if (vehicle.getSeatedPlayer() == player){
+            if (vehicle.getSeatedPlayer() == player) {
                 return vehicle;
             }
         }

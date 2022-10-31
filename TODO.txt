@@ -1,13 +1,19 @@
 Update Ground Vehicles:
-- Test collisions
 - Multicrew tanks?
-- TANK SHELL REBALANCE
-- Trailers.
+
+Add:
+- More Vehicles
+/ Missile can fire indicator.
+/ Finish trucks
+- Truck / Trailer? damage models
+- Entity Trucks / Trailers
 
 General Fixes:
 / optimizations
 / run on different server hardware
 - playtest
+Add trailer wakeup
+Add Effects to fuel burnout.
 
 Vehicle Management:
 - add shop.
@@ -15,8 +21,6 @@ Vehicle Management:
 Balancing:
 - extend takeoff / landing distances
 - rebalance damage model numbers?
-
-TODO ADD NEW THE NEW VEHICLES!
 
 SAVED CODE:
 

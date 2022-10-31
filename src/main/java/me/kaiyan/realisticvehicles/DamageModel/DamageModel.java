@@ -1,6 +1,5 @@
 package me.kaiyan.realisticvehicles.DamageModel;
 
-import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.Rect;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.VectorD;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.ArmourPlate;
@@ -8,7 +7,7 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
-import me.kaiyan.realisticvehicles.DataTypes.RadarTarget;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -16,7 +15,6 @@ import org.bukkit.util.Vector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -35,6 +33,8 @@ public class DamageModel implements Cloneable{
     @Nullable
     private final Rect upperHalf;
 
+    private final float collisionSphere;
+
     private boolean finished = false;
 
     /**
@@ -42,11 +42,12 @@ public class DamageModel implements Cloneable{
      * @param lowerHalf Lower hit box
      * @param upperHalf Upper hit box, Null if no turret
      */
-    public DamageModel(@Nonnull Rect lowerHalf, @Nullable Rect upperHalf){
+    public DamageModel(@Nonnull Rect lowerHalf, @Nullable Rect upperHalf, float collisionSphere){
         armour = new ArrayList<>();
         components = new ArrayList<>();
         this.lowerHalf = lowerHalf;
         this.upperHalf = upperHalf;
+        this.collisionSphere = collisionSphere;
     }
 
     public void finish(){
@@ -253,7 +254,6 @@ public class DamageModel implements Cloneable{
                         comp.destroyed = true;
                         destroyComponent = true;
                         if (comp.destroys && comp.isAmmo){
-                            System.out.println(components.indexOf(comp));
                             data.setDestroyedIndex(components.indexOf(comp));
                             return data;
                         } else if (comp.destroys){
@@ -460,10 +460,9 @@ public class DamageModel implements Cloneable{
 
     public void addComponent(Component comp){
         if (finished){
-            Bukkit.getLogger().severe("DAMAGED MODEL CALLED AFTER BEING FINISHED, ABORTING ACTION .addComponent().\nThis cannot be called after the model is finished.");
+            Bukkit.getLogger().severe("DAMAGED MODEL CALLED AFTER BEING FINISHED, ABORTING ACTION .addComponent().\nThis cannot be called after the model is finished.\n"+comp);
             return;
         }
-        System.out.println(comp.type);
         components.add(comp);
     }
 
@@ -544,7 +543,12 @@ public class DamageModel implements Cloneable{
             world.spawnParticle(Particle.REDSTONE, loc.clone().add(upperHalf.x+upperHalf.xsize, upperHalf.y+upperHalf.ysize, upperHalf.z), 0, new Particle.DustOptions(Color.WHITE, 2));
             world.spawnParticle(Particle.REDSTONE, loc.clone().add(upperHalf.x, upperHalf.y+upperHalf.ysize, upperHalf.z+upperHalf.zsize), 0, new Particle.DustOptions(Color.WHITE, 2));
             world.spawnParticle(Particle.REDSTONE, loc.clone().add(upperHalf.x+upperHalf.xsize, upperHalf.y+upperHalf.ysize, upperHalf.z+upperHalf.zsize), 0, new Particle.DustOptions(Color.WHITE, 2));
+        }
 
+        for (int i = 0; i < 20; i++) {
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 0, 1).rotateAroundY(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundX(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundZ(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
         }
     }
     
@@ -564,6 +568,15 @@ public class DamageModel implements Cloneable{
 
     public List<Component> getComponents() {
         return components;
+    }
+
+    public Component getComponent(ComponentType type){
+        for (Component comp : components){
+            if (comp.type == type){
+                return comp;
+            }
+        }
+        return null;
     }
 
     public void setArmour(List<ArmourPlate> armour) {
@@ -700,5 +713,9 @@ public class DamageModel implements Cloneable{
             maxHealth += comp.maxHealth;
         }
         return damage/maxHealth;
+    }
+
+    public float getCollisionSphere() {
+        return collisionSphere;
     }
 }

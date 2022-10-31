@@ -1,9 +1,9 @@
 package me.kaiyan.realisticvehicles.ModelHandlers;
 
-import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.DataTypes.RadarTarget;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.RadarTarget;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 

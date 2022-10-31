@@ -1,9 +1,13 @@
 package me.kaiyan.realisticvehicles.Physics;
 
-import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
+import me.kaiyan.realisticvehicles.VersionHandler.VersionHandler;
 import org.bukkit.*;
+import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -12,8 +16,10 @@ import java.util.Objects;
 
 public class ProjectileShell extends Shell implements FixedUpdate {
     public Location loc;
+    public Location prevLoc;
     public Vector moveBy;
     public Player player;
+    public ArmorStand stand;
 
     public static final float gravity = 0.05f;
 
@@ -44,6 +50,7 @@ public class ProjectileShell extends Shell implements FixedUpdate {
         moveBy = new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(-Math.toRadians(yaw)).multiply(power);
         this.tracer = tracer;
         this.player = player;
+        stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
 
         start();
     }
@@ -55,6 +62,7 @@ public class ProjectileShell extends Shell implements FixedUpdate {
         this.loc = loc;
         moveBy = new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(-Math.toRadians(yaw)).multiply(power);
         this.player = player;
+        stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
 
         start();
         System.out.println("Created Shell! " + (System.currentTimeMillis() - startTime));
@@ -65,27 +73,31 @@ public class ProjectileShell extends Shell implements FixedUpdate {
     @Override
     public void OnFixedUpdate() {
         if (loops >= 60) {
-            closeThis(false);
+            closeThis(0);
             return;
         }
 
         loc.add(moveBy);
         moveBy.subtract(new Vector(0, gravity, 0));
 
+        VersionHandler.teleport(stand, loc.toVector(), getYaw(), getPitch());
+
         if (tracer) {
             RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.RED, 6));
         } else {
-            RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.WHITE, 3));
+            RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.GRAY, 3));
         }
 
         if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()) {
             loc.getWorld().createExplosion(loc, 2, false, false);
-            closeThis(false);
+            stand.remove();
+            closeThis(0);
         }
         /*if(!loc.getChunk().isLoaded()) {
             closeThis();
         }*/
 
+        prevLoc = loc;
         loops++;
     }
 

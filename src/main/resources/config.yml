@@ -1,4 +1,4 @@
-resource-pack: https://www.dropbox.com/s/67dvhx4p2nppuan/TankPackV9.zip?dl=1
+resource-pack: https://www.dropbox.com/s/a0tvp6mris6xjg0/TankPackV23.zip?dl=1
 
 armor-repair-cost: 200
 component-repair-cost: 200
@@ -9,8 +9,8 @@ fuelTypes:
     diesel:
         name: Diesel
         # Density of fuel
-        # 1 = 1 fuel used up per fuel check
-        # 0.5 = 2 fuel used up per check
+        # 1 = 1 fuel used up per fuel tick (ish)
+        # 0.5 = 2 fuel used up per tick (ish)
         # fuel = fuelConsumptionAmount/fuelDensity
         fuelDensity: 1
         # Amount of money to give per fuel "unit"

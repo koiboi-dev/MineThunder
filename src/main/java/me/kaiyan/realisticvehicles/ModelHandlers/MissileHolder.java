@@ -1,20 +1,15 @@
 package me.kaiyan.realisticvehicles.ModelHandlers;
 
-import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
-import me.kaiyan.realisticvehicles.DataTypes.RadarTarget;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.RadarTarget;
 import me.kaiyan.realisticvehicles.Physics.Missile;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MissileHolder implements Cloneable{
     private final List<MissileSlot> missiles;
@@ -89,6 +84,15 @@ public class MissileHolder implements Cloneable{
 
     public List<MissileSlot> getMissiles() {
         return missiles;
+    }
+
+    public MissileHolder clone(){
+        try {
+            return (MissileHolder) super.clone();
+        } catch (CloneNotSupportedException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public MissileHolder deepClone(){

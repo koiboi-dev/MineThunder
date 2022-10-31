@@ -1,22 +1,30 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
+import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
 import org.bukkit.Location;
 import org.bukkit.util.Vector;
 
 public class TrailerHitch {
     private Location loc;
     private Vector offset;
-    private float pYaw;
-    private float parentSpeed;
+    private final TrailerTypes type;
+    private boolean activated;
 
-    public TrailerHitch(Vector offset) {
+    public TrailerHitch(Vector offset, TrailerTypes type) {
         this.offset = offset;
+        this.type = type;
     }
 
-    public void update(Location vLoc, float yaw, float parentSpeed){
-        loc = vLoc.clone().add(offset.rotateAroundY(Math.toRadians(yaw)));
-        pYaw = yaw;
-        this.parentSpeed = parentSpeed;
+    public void update(Location vLoc, float yaw){
+        loc = vLoc.clone().add(offset.clone().rotateAroundY(-Math.toRadians(yaw)));
+    }
+
+    public boolean isActivated() {
+        return activated;
+    }
+
+    public void setActivated(boolean activated) {
+        this.activated = activated;
     }
 
     public Location getLoc() {
@@ -35,11 +43,7 @@ public class TrailerHitch {
         this.offset = offset;
     }
 
-    public float getpYaw() {
-        return pYaw;
-    }
-
-    public float getParentSpeed() {
-        return parentSpeed;
+    public TrailerTypes getType() {
+        return type;
     }
 }

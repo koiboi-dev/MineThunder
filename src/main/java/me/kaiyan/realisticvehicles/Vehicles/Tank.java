@@ -4,18 +4,26 @@ import me.kaiyan.realisticvehicles.DataTypes.*;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
+import me.kaiyan.realisticvehicles.ModelHandlers.Model;
+import me.kaiyan.realisticvehicles.ModelHandlers.ParticleModel;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
+import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
+import me.kaiyan.realisticvehicles.VersionHandler.VersionHandler;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.minecraft.util.Tuple;
 import org.bukkit.*;
-import org.bukkit.craftbukkit.v1_18_R2.entity.CraftArmorStand;
 import org.bukkit.entity.*;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
@@ -34,12 +42,12 @@ import java.util.List;
 
 import static me.kaiyan.realisticvehicles.RealisticVehicles.SCRAPKEY;
 
-public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface {
+public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
     private final DamageModel damageModel;
-    private final Entity baseEntity;
-    private final Entity turretEnt;
-    private final Entity gunEnt;
-    private final Entity driverSeat;
+    private Entity baseEntity;
+    private Entity turretEnt;
+    private Entity gunEnt;
+    private Entity driverSeat;
 
     private final String type;
     private float turretYaw = 0;
@@ -82,9 +90,9 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             this.seatPos = settings.getSeatPos();
             this.seatRaisedPos = settings.getSeatRaisedPos();
 
-            baseEntity = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID());
-            turretEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 1);
-            gunEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 2);
+            baseEntity = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID(), settings.getTextureID());
+            turretEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 1, settings.getTextureID() + 1);
+            gunEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 2, settings.getTextureID() + 2);
 
             Vector vec = seatRaisedPos.clone();
             vec.rotateAroundY(-Math.toRadians(turretYaw));
@@ -128,7 +136,6 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
 
             inv.setItem(8, zoomItem);
 
-            RealisticVehicles.debugLog(settings.getDamageModel());
             damageModel = settings.getDamageModel().clone();
 
             setup(driverSeat,packet -> {
@@ -138,9 +145,12 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
                 firingMG = packet.getPacket().getBooleans().read(0);
             });
 
-            for (Vector hvec : settings.getHitches()){
-                hitches.add(new TrailerHitch(hvec));
+            for (Tuple<Vector, TrailerTypes> hvec : settings.getHitches()){
+                hitches.add(new TrailerHitch(hvec.a(), hvec.b()));
             }
+
+            gunRecoilCooldown = settings.getGunRecoilCooldown();
+            gunSetback = settings.getGunRecoilSetback();
 
             start();
         } else {
@@ -166,7 +176,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
         }
         if (hit != null) {
             if (hit.getHitEntity() != null) {
-                if (!(hit.getHitEntity() instanceof ArmorStand) && hit.getHitEntity() instanceof LivingEntity){
+                if (!(hit.getHitEntity() instanceof ArmorStand)){
                     ((LivingEntity) hit.getHitEntity()).damage(10, seatedPlayer);
                 }
             }
@@ -228,10 +238,15 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
 
     int loops = 0;
 
+    public float gunRecoil;
+    public final float gunRecoilCooldown;
+    public final float gunSetback;
+
     @Override
     public void OnFixedUpdate() {
         if (driverSeat.getPassengers().size() != 0) {
             seatedPlayer = (Player) driverSeat.getPassengers().get(0);
+            sleepTicks = 0;
         } else {
             if (invOwner != null && playerInv != null){
                 invOwner.setInvulnerable(false);
@@ -241,24 +256,28 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
                 playerInv = null;
             }
             seatedPlayer = null;
+            sleepTicks++;
         }
 
         setActiveComps();
 
         update();
         for (TrailerHitch hitch : hitches){
-            hitch.update(getLoc(), getVehicleYaw(), (float) getSpeed());
+            hitch.update(getLoc(), (float)getYaw());
         }
 
         //((CraftArmorStand) gunEnt).getHandle().setHeadPose(new Vector3f((float) Math.toRadians(turretPitch), 0, 0));
         ((ArmorStand) gunEnt).setHeadPose(new EulerAngle(Math.toRadians(turretPitch), 0, 0));
 
         //baseEntity.teleport(loc)
-        ((CraftArmorStand) baseEntity).getHandle().b(getLoc().getX(), getLoc().getY(), getLoc().getZ(), (float) getYaw(), 0);
+        VersionHandler.teleport(baseEntity, getLoc().toVector(), (float) getYaw(), 0);
         //turretEnt.teleport(baseEntity.getLocation());
-        ((CraftArmorStand) turretEnt).getHandle().b(getLoc().getX(), getLoc().getY(), getLoc().getZ(), turretYaw, 0);
+        VersionHandler.teleport(turretEnt, getLoc().toVector(), turretYaw, 0);
         //gunEnt.teleport(baseEntity.getLocation());
-        ((CraftArmorStand) gunEnt).getHandle().b(getLoc().getX(), getLoc().getY(), getLoc().getZ(), turretYaw, turretPitch);
+        //System.out.println(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(turretPitch)).rotateAroundY(Math.toRadians(-turretYaw+180)).multiply(gunRecoil));
+        VersionHandler.teleport(gunEnt, getLoc().clone().add(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(-turretPitch)).rotateAroundY(Math.toRadians(-turretYaw+180)).multiply(gunRecoil)).toVector(), turretYaw, turretPitch);
+        gunRecoil -= gunRecoilCooldown;
+        gunRecoil = Math.max(0, gunRecoil);
 
         Vector mseatcoord;
         if (!raised) {
@@ -307,7 +326,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             mseatcoord.add(zoomCheck());
         }
 
-        ((CraftArmorStand) driverSeat).getHandle().b(mseatcoord.getX(), mseatcoord.getY(), mseatcoord.getZ(), 0, 0);
+        VersionHandler.teleport(driverSeat, mseatcoord.toLocation(driverSeat.getWorld()).toVector(), 0, 0);
 
         if (turretYaw > 180) {
             turretYaw = -180;
@@ -344,6 +363,9 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             }
         }
         loops++;
+        if (sleepTicks >= RealisticVehicles.VEHICLESLEEPTIME){
+            sleep();
+        }
     }
 
     boolean isZooming;
@@ -365,7 +387,9 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             vec.rotateAroundX(Math.toRadians(turretPitch));
             vec.rotateAroundY(Math.toRadians(-turretYaw));
             vec.add(getLoc().toVector());
-            Random rand = new Random();
+            ParticleModel.TANKSHOTLARGE.spawnGunSmoke(getLoc().getWorld(), vec, turretYaw, turretPitch);
+            gunRecoil += gunSetback;
+            /*Random rand = new Random();
             new BukkitRunnable() {
                 int loops = 0;
 
@@ -384,7 +408,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
                     }
                     loops++;
                 }
-            }.runTaskTimer(RealisticVehicles.getInstance(), 0, 1);
+            }.runTaskTimer(RealisticVehicles.getInstance(), 0, 1);*/
             driverSeat.getWorld().playSound(getLoc(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.HOSTILE, 1, 1);
 
             if (damageModel.areAllCompsActive(ComponentType.GUNBARREL) && damageModel.areAllCompsActive(ComponentType.GUNLOADER)) {
@@ -422,8 +446,6 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
 
     @Override
     public void displayActionBar() {
-        //TODO finish this
-
         if (seatedPlayer != null) {
             if (reloading) {
                 switch (reloadState) {
@@ -520,23 +542,23 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             driverSeat.getWorld().spawnParticle(Particle.CAMPFIRE_SIGNAL_SMOKE, getLoc(), 0, getRand(rand, 0.5), Math.abs(getRand(rand, 1.25)), getRand(rand, 0.5), 0.25, null, true);
             driverSeat.getWorld().spawnParticle(Particle.FLAME, getLoc(), 0, getRand(rand, 0.25), Math.abs(getRand(rand, 0.25)), getRand(rand, 0.25), 1, null, true);
         }
-        this.closeThis(false);
+        this.closeThis(1);
     }
 
     @Override
-    public void closeThis(boolean clearStands) {
-        FixedUpdate.super.closeThis(false);
+    public void closeThis(int clearStands) {
+        FixedUpdate.super.closeThis(1);
         if (invOwner != null) {
             invOwner.setInvulnerable(false);
             invOwner.getInventory().clear();
             invOwner.getInventory().setContents(playerInv);
         }
-        driverSeat.remove();
-        if (clearStands) {
+        if (clearStands == 2) {
             baseEntity.remove();
             turretEnt.remove();
             gunEnt.remove();
-        } else {
+            driverSeat.remove();
+        } else if (clearStands == 1){
             Random rand = new Random();
             baseEntity.getPersistentDataContainer().set(SCRAPKEY, PersistentDataType.INTEGER, (int) Math.round(rand.nextDouble()*RealisticVehicles.getInstance().getConfig().getDouble("scrap-reward")));
             turretEnt.getPersistentDataContainer().set(SCRAPKEY, PersistentDataType.INTEGER, (int) Math.round(rand.nextDouble()*RealisticVehicles.getInstance().getConfig().getDouble("scrap-reward")));
@@ -546,7 +568,16 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
 
     @Override
     public void scrap(boolean delete) {
-        closeThis(delete);
+        if (delete) {
+            closeThis(2);
+        } else {
+            closeThis(1);
+        }
+    }
+
+    @Override
+    public void crash() {
+        damageModel.getComponent(ComponentType.ENGINE).health -= 0.25;
     }
 
     @Override
@@ -747,5 +778,50 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
 
     public void setZooming(boolean zooming) {
         isZooming = zooming;
+    }
+
+    int sleepTicks = 0;
+    @Override
+    public int getTicksSinceLastWake() {
+        return sleepTicks;
+    }
+
+    @Override
+    public void setWakeTicks(int amount) {
+        sleepTicks = amount;
+    }
+
+    @Override
+    public void sleep() {
+        if (seatedPlayer != null){
+            driverSeat.eject();
+            seatedPlayer.getInventory().setContents(playerInv);
+        }
+        String id = UUID.randomUUID().toString();
+        gunEnt.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";gun;"+getVehicleYaw());
+        turretEnt.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";turret;"+getVehicleYaw());
+        baseEntity.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";base;"+getVehicleYaw());
+        driverSeat.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";seat;"+getVehicleYaw());
+        closeThis(0);
+    }
+
+    public void resetModels(ArmorStand seatEnt, ArmorStand baseStand, ArmorStand gunStand, ArmorStand turretStand){
+        if (seatEnt != null) {
+            driverSeat.remove();
+            this.driverSeat = seatEnt;
+            updateSeat(seatEnt);
+        }
+        if (baseStand != null) {
+            baseEntity.remove();
+            this.baseEntity = baseStand;
+        }
+        if (gunStand != null) {
+            gunEnt.remove();
+            this.gunEnt = gunStand;
+        }
+        if (turretStand != null) {
+            turretEnt.remove();
+            this.turretEnt = turretStand;
+        }
     }
 }

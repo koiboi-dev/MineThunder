@@ -5,11 +5,12 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
+import me.kaiyan.realisticvehicles.Vehicles.Car;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -25,7 +26,6 @@ import org.ipvp.canvas.slot.Slot;
 import org.ipvp.canvas.type.ChestMenu;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 public class VehicleMenu {
@@ -81,14 +81,13 @@ public class VehicleMenu {
         rmeta.setDisplayName(ChatColor.GREEN+"Repair Vehicle");
         double armourRepairCost = 0;
         for (ArmourPlate armour : vehicle.getDamageModel().getArmour()){
-            System.out.println(Math.round(armour.weakness));
             armourRepairCost += Math.round(armour.weakness*RealisticVehicles.getInstance().getConfig().getDouble("armor-repair-cost"));
         }
         double componentRepairCost = 0;
         for (Component comp : vehicle.getDamageModel().getComponents()){
             componentRepairCost += Math.round((comp.maxHealth-comp.health)*RealisticVehicles.getInstance().getConfig().getDouble("component-repair-cost"));
         }
-        rmeta.setLore(Arrays.asList(ChatColor.GOLD+"Right Click - Repair Armour, Costs: " + armourRepairCost,ChatColor.GOLD+"Left Click - Repair Components, Costs: " +componentRepairCost));
+        rmeta.setLore(Arrays.asList(ChatColor.GOLD+"Left Click - Repair Components, Costs: " +componentRepairCost, ChatColor.GOLD+"Right Click - Repair Armour, Costs: " + armourRepairCost));
         repairItem.setItemMeta(rmeta);
         repairSlot.setItem(repairItem);
 
@@ -128,9 +127,7 @@ public class VehicleMenu {
             missileMeta.setDisplayName("Configure Missile Setup");
             missileItem.setItemMeta(missileMeta);
             missileSlot.setItem(missileItem);
-            missileSlot.setClickHandler((ply, info) -> {
-                generateEquipmentMenu(vehicle.getMissileHolder(), vehicle, player).open(player);
-            });
+            missileSlot.setClickHandler((ply, info) -> generateEquipmentMenu(vehicle.getMissileHolder(), vehicle, player).open(player));
         }
 
         Slot deleteSlot = menu.getSlot(7);
@@ -146,9 +143,27 @@ public class VehicleMenu {
             vehicle.scrap(true);
             menu.close();
         });
+        if (vehicle instanceof Car car){
+            Slot inv = menu.getSlot(3);
+            ItemStack invItem = new ItemStack(Material.CHEST);
+            ItemMeta invMeta = invItem.getItemMeta();
+            invMeta.setDisplayName("Open Inventory");
+            invMeta.setLore(List.of(ChatColor.GRAY+"Opens this vehicles inventory", ChatColor.GRAY+"Temp inventory for storing / placing items"));
+            invItem.setItemMeta(invMeta);
+            inv.setItem(invItem);
 
-        Mask mask = BinaryMask.builder(menu).pattern("101111101").pattern("101000101").item(new ItemStack(Material.GRAY_STAINED_GLASS_PANE)).build();
-        mask.apply(menu);
+            inv.setClickHandler((p, info) -> {
+                if (car.getHarvester() != null){
+                    p.openInventory(car.getHarvester().getInv());
+                }
+            });
+
+            Mask mask = BinaryMask.builder(menu).pattern("101011101").pattern("101000101").item(new ItemStack(Material.GRAY_STAINED_GLASS_PANE)).build();
+            mask.apply(menu);
+        } else {
+            Mask mask = BinaryMask.builder(menu).pattern("101111101").pattern("101000101").item(new ItemStack(Material.GRAY_STAINED_GLASS_PANE)).build();
+            mask.apply(menu);
+        }
 
         menu.open(player);
     }

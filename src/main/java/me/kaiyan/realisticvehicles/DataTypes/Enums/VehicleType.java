@@ -4,5 +4,7 @@ public enum VehicleType{
     TANK,
     CAR,
     AIR,
-    SEA
+    SEA,
+    TRAILER,
+    TRAIN
 }

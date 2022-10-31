@@ -1,8 +1,11 @@
-package me.kaiyan.realisticvehicles.DataTypes;
+package me.kaiyan.realisticvehicles.DataTypes.Interfaces;
 
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.DataTypes.FuelTank;
+import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
+import me.kaiyan.realisticvehicles.DataTypes.TrailerHitch;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
 import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import org.bukkit.Location;
@@ -43,6 +46,7 @@ public interface VehicleInterface {
     }
 
     void scrap(boolean delete);
+    void crash();
 
     List<TrailerHitch> getTrailerHitches();
 }

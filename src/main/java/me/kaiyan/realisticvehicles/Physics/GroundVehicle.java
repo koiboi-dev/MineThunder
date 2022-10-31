@@ -40,6 +40,10 @@ public class GroundVehicle {
         this.settings = settings;
     }
 
+    public void updateSeat(Entity seat){
+        baseSeat = seat;
+    }
+
     public void setup(Entity seat, @Nullable VehiclePacket packetSender){
         baseSeat = seat;
         if (packetSender == null) {
@@ -62,7 +66,7 @@ public class GroundVehicle {
                     PacketType.Play.Client.STEER_VEHICLE) {
                 @Override
                 public void onPacketReceiving(PacketEvent event) {
-                    if (baseSeat.getPassengers().size() != 0 && engineActive) {
+                    if (baseSeat.getPassengers().size() != 0 && engineActive && hasFuel) {
                         if (event.getPlayer() == baseSeat.getPassengers().get(0)) {
                             steer(event.getPacket().getFloat().read(0));
                             getPedal(event.getPacket().getFloat().read(1));
@@ -91,7 +95,6 @@ public class GroundVehicle {
 
         loc.add(new Vector(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw))).normalize().multiply(speed));
 
-        int loops = 0;
         // Old Hit Code? Maybe...
         /*Vector[] checks = new Vector[] {
                 new Vector(-Math.sin(Math.toRadians(yaw)), 0, Math.cos(Math.toRadians(yaw))),
@@ -154,12 +157,16 @@ public class GroundVehicle {
 
     public void steer(double amount){
         if (settings.getSteerType() == SteerType.REGULAR){
-            if (speed > 0.1 && onGround) {
+            if ((speed > 0.1 || speed < -0.1) && onGround) {
                 speed -= settings.getTurnDeceleration() * Math.abs(amount);
-                yaw -= settings.getTurnSpeed() * amount;
+                if (speed < -0.1){
+                    yaw += settings.getTurnSpeed() * amount * (getSpeed()/settings.getMaxSpeed());
+                } else {
+                    yaw -= settings.getTurnSpeed() * amount * (getSpeed()/settings.getMaxSpeed());
+                }
             }
         } else if (settings.getSteerType() == SteerType.TANK){
-            if (speed > 0.1 && onGround) {
+            if ((speed > 0.1 || speed < -0.1) && onGround) {
                 speed -= settings.getTurnDeceleration() * Math.abs(amount);
                 yaw -= settings.getTurnSpeed() * amount;
             } else if (onGround){
@@ -249,5 +256,9 @@ public class GroundVehicle {
 
     public Entity getBaseSeat() {
         return baseSeat;
+    }
+
+    public void setYaw(float yaw){
+        this.yaw = yaw;
     }
 }

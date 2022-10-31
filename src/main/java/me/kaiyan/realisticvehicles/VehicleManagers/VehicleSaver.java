@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Aircraft;
+import me.kaiyan.realisticvehicles.Vehicles.Car;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
 import org.bukkit.Location;
 
@@ -37,7 +39,7 @@ public class VehicleSaver {
         }
     }
 
-    public void createCraft(Location loc){
+    public VehicleInterface createCraft(Location loc){
         if (vType == VehicleType.AIR){
             try {
                 System.out.println("Creating Craft...");
@@ -50,6 +52,7 @@ public class VehicleSaver {
                 if (craft.getMissileHolder() != null) {
                     missiles.updateMissileHolder(craft.getMissileHolder(), loc);
                 }
+                return craft;
             } catch (InvalidTypeException e) {
                 RealisticVehicles.getInstance().getLogger().severe("UNKNOWN AIRCRAFT "+type+" WHEN PLACING NEW CRAFT!");
             }
@@ -65,10 +68,24 @@ public class VehicleSaver {
                 if (craft.getMissileHolder() != null) {
                     missiles.updateMissileHolder(craft.getMissileHolder(), loc);
                 }
+                return craft;
             } catch (InvalidTypeException e) {
                 RealisticVehicles.getInstance().getLogger().severe("UNKNOWN TANK "+type+" WHEN PLACING NEW CRAFT!");
             }
+        } else if (vType == VehicleType.CAR){
+            Car craft = new Car(loc, CarSettings.getCarSettings(type));
+            craft.getFuelTank().setFuel(savedFuel);
+            craft.getFuelTank().refuelAmountOfFuel(FuelType.getTypeFromName(savedFuelType), 0);
+            craft.getShellsAmmo()[0] = savedShells[0];
+            craft.getShellsAmmo()[1] = savedShells[1];
+            craft.getShellsAmmo()[2] = savedShells[2];
+            damageModel.updateDamageModel(craft.getDamageModel());
+            if (craft.getMissileHolder() != null) {
+                missiles.updateMissileHolder(craft.getMissileHolder(), loc);
+            }
+            return craft;
         }
+        return null;
     }
 
     public String getType() {

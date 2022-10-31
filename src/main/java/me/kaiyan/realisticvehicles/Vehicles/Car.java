@@ -3,27 +3,37 @@ package me.kaiyan.realisticvehicles.Vehicles;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.*;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
+import me.kaiyan.realisticvehicles.ModelHandlers.Harvester.BlockHarvester;
 import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
 import me.kaiyan.realisticvehicles.ModelHandlers.Model;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
+import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.GroundVehicleSettings;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.minecraft.network.syncher.DataWatcherObject;
+import net.minecraft.util.Tuple;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.*;
 import org.bukkit.util.Vector;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface {
-    private final Model model;
-    private final Entity seatEnt;
+public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
+    private Model model;
+    private Entity seatEnt;
     private final DamageModel damageModel;
+    private final CarSettings settings;
 
     private final FuelTank fuelTank;
 
@@ -31,8 +41,12 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface 
 
     List<TrailerHitch> hitches = new ArrayList<>();
 
+    private final BlockHarvester harvester;
+    private boolean trigger;
+
     public Car(Location loc, CarSettings settings) {
         super(loc, settings);
+        this.settings = settings;
         world = loc.getWorld();
 
         damageModel = settings.getDamageModel().clone();
@@ -40,50 +54,86 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface 
 
         seatEnt = RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), VehicleType.CAR);
 
-        model = new Model((ArmorStand) seatEnt, new Vector(), 3f);
+        model = new Model((ArmorStand) seatEnt, settings.getSeatPos(), settings.getOffset(), true);
         for (Map.Entry<int[], Integer> entry : settings.getModels().entrySet()){
-            model.addCorner(entry.getKey(), (ArmorStand) RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), entry.getValue()));
+            model.addCorner(entry.getKey(), (ArmorStand) RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), entry.getValue(), entry.getValue()));
+        }
+        for (Vector vec : settings.getSeats()){
+            model.addSeat(vec, (ArmorStand) RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), VehicleType.CAR));
         }
 
-        for (Vector vec : settings.getHitches()){
-            hitches.add(new TrailerHitch(vec));
+        for (Tuple<Vector, TrailerTypes> vec : settings.getHitches()){
+            hitches.add(new TrailerHitch(vec.a(), vec.b()));
+        }
+        if (settings.getHarvester() != null) {
+            harvester = settings.getHarvester().clone();
+        } else {
+            harvester = null;
         }
 
-        setup(seatEnt, null);
+        setup(seatEnt, (packet) -> {
+            if (packet.getPacket().getBooleans().read(0) && cooldown <= 0){
+                trigger = !trigger;
+                cooldown = 40;
+            }
+        });
+        start();
+    }
+
+    private int cooldown = 40;
+
+    public void resetModels(ArmorStand seatEnt){
+        //model.clearAll();
+        //model = new Model(seatEnt, getSettings().getSeatPos(), settings.getOffset(), true);
+        //this.seatEnt = seatEnt;
+        //updateSeat(seatEnt);
+        /*for (Map.Entry<int[], Integer> stand : settings.getModels().entrySet()){
+            model.addCorner(
+                    stand.getKey(),
+                    (ArmorStand) RealisticVehicles.setTexture((LivingEntity) seatEnt.getWorld().spawnEntity(getLoc(), EntityType.ARMOR_STAND), stand.getValue(), stand.getValue())
+            );
+        }*/
     }
 
     @Override
     public void OnFixedUpdate() {
+        if (getSeatedPlayer() == null){
+            sleepTicks++;
+        } else {
+            sleepTicks = 0;
+        }
+
+        cooldown--;
+
         update();
         model.updatePositions(getLoc(), 0, (float) getYaw(), 0);
 
         setHasFuel(!(fuelTank.getFuel() <= 0));
 
         for (TrailerHitch hitch : hitches){
-            hitch.update(getLoc(), getVehicleYaw(), (float) getSpeed());
+            hitch.update(getLoc(), getVehicleYaw());
+            hitch.setActivated(trigger);
         }
+        if (trigger && harvester != null){
+            harvester.update(getLoc(), getVehicleYaw(), trigger);
+        }
+
+        if (sleepTicks >= RealisticVehicles.VEHICLESLEEPTIME){
+            sleep();
+        }
+
+        sleepTicks++;
+        displayActionBar();
     }
 
     @Override
     public void flashModel() {
-        FixedUpdate.super.flashModel();
+        damageModel.flashAll(world, getLoc());
+        for (TrailerHitch hitch : getTrailerHitches()) {
+            world.spawnParticle(Particle.CLOUD, hitch.getLoc(), 1);
+        }
+        harvester.flashPoints(getLoc(), getVehicleYaw());
     }
-
-    @Override
-    public void OnClose() {
-        FixedUpdate.super.OnClose();
-    }
-
-    @Override
-    public void closeThis(boolean clearStands) {
-        FixedUpdate.super.closeThis(clearStands);
-    }
-
-    @Override
-    public void start() {
-        FixedUpdate.super.start();
-    }
-
 
     @Override
     public float getVehicleYaw() {
@@ -141,7 +191,22 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface 
 
     @Override
     public void displayActionBar() {
+        String harv = ChatColor.RED+"Disabled.";
+        if (trigger){
+            harv = ChatColor.GREEN+"Enabled.";
+        }
+        BaseComponent[] comps = new ComponentBuilder()
+                .append(ChatColor.GREEN+String.format("Speed: %.2f", getSpeed()))
+                .append(ChatColor.YELLOW+String.format(" Fuel: %.2f", fuelTank.getFuel()))
+                .append(ChatColor.WHITE+" Harvesting: "+harv)
+                .create();
+        if (seatEnt.getPassengers().size() != 0) {
+            ((Player)seatEnt.getPassengers().get(0)).spigot().sendMessage(ChatMessageType.ACTION_BAR, comps);
+        }
+    }
 
+    public BlockHarvester getHarvester() {
+        return harvester;
     }
 
     @Override
@@ -189,7 +254,56 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface 
     }
 
     @Override
+    public void crash() {
+        damageModel.explosionImpact(1, 0, 0, 0, 0, 0, 0, getSeatedPlayer());
+
+    }
+
+    @Override
+    public void closeThis(int standAction) {
+        FixedUpdate.super.closeThis(standAction);
+        if (standAction == 1) {
+            scrap(false);
+        } else if (standAction == 2){
+            scrap(true);
+        }
+    }
+
+    @Override
     public List<TrailerHitch> getTrailerHitches() {
         return hitches;
+    }
+
+    @Override
+    public Entity getBaseSeat() {
+        return seatEnt;
+    }
+    @Override
+    public boolean hasArmourStand(ArmorStand stand) {
+        return model.containsStand(stand);
+    }
+
+    private int sleepTicks = 0;
+    @Override
+    public int getTicksSinceLastWake() {return sleepTicks;}
+
+    @Override
+    public void setWakeTicks(int amount) {
+        sleepTicks = amount;
+    }
+
+    @Override
+    public void sleep() {
+        if (harvester != null) {
+            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson() + "@" + Trailer.inventoryToBase64(harvester.getInv()));
+            closeThis(0);
+        } else {
+            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson()+"@");
+            closeThis(0);
+        }
+    }
+
+    public CarSettings getSettings(){
+        return settings;
     }
 }

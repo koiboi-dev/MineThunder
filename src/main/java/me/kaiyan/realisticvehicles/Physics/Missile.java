@@ -1,9 +1,11 @@
 package me.kaiyan.realisticvehicles.Physics;
 
-import me.kaiyan.realisticvehicles.DataTypes.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.Counters.Updates;
 import me.kaiyan.realisticvehicles.DataTypes.*;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.RadarTarget;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.Particle;
@@ -98,12 +100,12 @@ public class Missile implements FixedUpdate {
                 }
             }
         }
-        closeThis(true);
+        closeThis(0);
     }
 
     @Override
-    public void closeThis(boolean clearStands) {
-        FixedUpdate.super.closeThis(clearStands);
+    public void closeThis(int actionType) {
+        FixedUpdate.super.closeThis(actionType);
         stand.remove();
     }
 

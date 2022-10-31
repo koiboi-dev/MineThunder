@@ -1,22 +1,27 @@
 package me.kaiyan.realisticvehicles;
 
 import me.kaiyan.realisticvehicles.Counters.Updates;
-import me.kaiyan.realisticvehicles.DataTypes.VehicleInterface;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
+import me.kaiyan.realisticvehicles.Menus.TrailerMenu;
 import me.kaiyan.realisticvehicles.Menus.VehicleMenu;
+import me.kaiyan.realisticvehicles.ModelHandlers.Model;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
-import me.kaiyan.realisticvehicles.Vehicles.Aircraft;
-import me.kaiyan.realisticvehicles.Vehicles.Tank;
+import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
+import me.kaiyan.realisticvehicles.Vehicles.*;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Item;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -30,21 +35,141 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 import org.checkerframework.checker.units.qual.C;
 
-import java.util.Objects;
+import java.io.IOException;
+import java.util.*;
 
 public class EventListener implements Listener {
     public static final NamespacedKey vehicleType = new NamespacedKey(RealisticVehicles.getInstance(), "vehicleTypes");
 
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractAtEntityEvent event){
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerInteractEntity(PlayerInteractAtEntityEvent event){
         event.setCancelled(fireWeapons(event.getPlayer().getInventory().getItemInMainHand(), event.getPlayer(), Action.RIGHT_CLICK_AIR));
 
         Entity en = event.getRightClicked();
+
+        if (en.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
+            System.out.println("Sleep Key'd");
+            String[] info = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
+            System.out.println(info[0]);
+            switch (VehicleType.valueOf(info[1])){
+                case CAR -> {
+                    System.out.println("Car");
+                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
+                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
+                    ArmorStand seat = null;
+                    HashMap<int[], ArmorStand> stands = new HashMap<>();
+                    Location loc = en.getLocation().clone();
+                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
+                        if (ent instanceof ArmorStand stand){
+                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
+                                String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
+                                System.out.println(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[1]);
+                                if (!Objects.equals(sinfo[0], info[0])){
+                                    continue;
+                                }
+                                stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
+                                stand.remove();
+                                /*if (sinfo[6].equals("1")){
+                                    if (stand.getUniqueId().equals(en.getUniqueId()))
+                                        loc.subtract(new Vector(Float.parseFloat(sinfo[4]), 0, Float.parseFloat(sinfo[5])));
+                                    seat = stand;
+                                    continue;
+                                } else if (stand.getUniqueId().equals(en.getUniqueId())){
+                                    loc.subtract(new Vector(Integer.parseInt(sinfo[4]), 0, Integer.parseInt(sinfo[5])).multiply(Model.GRID_OFFSET));
+                                }
+                                stands.put(new int[] {Integer.parseInt(sinfo[4]), Integer.parseInt(sinfo[5])}, stand);*/
+                            }
+                        }
+                    }
+                    Car car = (Car) VehicleSaver.fromJson(info[3].split("@")[0]).createCraft(loc);
+                    //car.resetModels(seat);
+                    car.setYaw(Float.parseFloat(info[7]));
+                    if (info[3].split("@").length != 1){
+                        try {
+                            car.getHarvester().setInv(Trailer.inventoryFromBase64(info[3].split("@")[1]));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    car.getBaseSeat().addPassenger(event.getPlayer());
+                }
+                case TANK -> {
+                    // 0  ; 1           ; 2                                 ; 3  ; 4
+                    //id+";"+getType()+";"+new VehicleSaver(this).toJson()+";seat;"+getVehicleYaw()
+                    ArmorStand seat = null;
+                    ArmorStand turret = null;
+                    ArmorStand gun = null;
+                    ArmorStand base = null;
+                    Location loc = en.getLocation().clone();
+                    boolean enIsSeat = false;
+                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
+                        if (ent instanceof ArmorStand stand){
+                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)) {
+                                String data = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING);
+                                stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
+                                if (Objects.equals(data.split(";")[0], info[0])) {
+                                    if (data.contains("gun")) gun = stand;
+                                    else if (data.contains("turret")) turret = stand;
+                                    else if (data.contains("base")) base = stand;
+                                    else if (data.contains("seat")) {
+                                        seat = stand;
+                                        enIsSeat = en.getUniqueId() == stand.getUniqueId();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    Tank tank = (Tank) VehicleSaver.fromJson(info[2]).createCraft(loc);
+                    tank.resetModels(seat, base, gun, turret);
+                    if (enIsSeat){
+                        loc.subtract(tank.getSeatPos());
+                    }
+                    tank.setLoc(loc);
+                    tank.setYaw(Float.parseFloat(info[4]));
+                    tank.getBaseSeat().addPassenger(event.getPlayer());
+                }
+                case AIR -> {
+                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
+                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
+                    //ArmorStand seat = null;
+                    //HashMap<int[], ArmorStand> stands = new HashMap<>();
+                    Location loc = en.getLocation().clone();
+                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
+                        if (ent instanceof ArmorStand stand){
+                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
+                                String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
+                                System.out.println(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[2]);
+                                if (!Objects.equals(sinfo[0], info[0])){
+                                    continue;
+                                }
+                                //stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
+                                stand.remove();
+                                /*if (sinfo[6].equals("1")){
+                                    if (stand.getUniqueId().equals(en.getUniqueId()))
+                                        loc.subtract(new Vector(Float.parseFloat(sinfo[4]), 0, Float.parseFloat(sinfo[5])));
+                                    seat = stand;
+                                    continue;
+                                } else if (stand.getUniqueId().equals(en.getUniqueId())){
+                                    loc.subtract(new Vector(Integer.parseInt(sinfo[4]), 0, Integer.parseInt(sinfo[5])).multiply(Model.GRID_OFFSET));
+                                }
+                                stands.put(new int[] {Integer.parseInt(sinfo[4]), Integer.parseInt(sinfo[5])}, stand);*/
+                            }
+                        }
+                    }
+                    Aircraft plane = (Aircraft) VehicleSaver.fromJson(info[3]).createCraft(loc.clone().add(new Vector(0, 1, 0)));
+                    plane.setYaw(Float.parseFloat(info[7]));
+                    //plane.getLoc().add(new Vector(0, 0.5, 0));
+                    plane.getBaseSeat().addPassenger(event.getPlayer());
+                }
+            }
+        }
+
         if (en.getPersistentDataContainer().has(vehicleType, PersistentDataType.STRING) && en instanceof ArmorStand stand){
             event.setCancelled(true);
             //String type = en.getPersistentDataContainer().get(vehicleType, PersistentDataType.STRING);
 
             VehicleInterface inter = Updates.getVehicleFromStand(stand);
+            System.out.println(inter);
 
             if (inter instanceof Tank tank){
                 if (event.getPlayer().isSneaking()){
@@ -61,8 +186,16 @@ public class EventListener implements Listener {
                     inter.getBaseSeat().addPassenger(event.getPlayer());
                     inter.playerEnteredVehicle(event.getPlayer());
                 }
+            } else if (inter instanceof Car car){
+                if (event.getPlayer().isSneaking()){
+                    VehicleMenu.showMenu(car, event.getPlayer());
+                } else {
+                    inter.getBaseSeat().addPassenger(event.getPlayer());
+                    inter.playerEnteredVehicle(event.getPlayer());
+                }
             }
-        } else if (en.getPersistentDataContainer().has(RealisticVehicles.SCRAPKEY, PersistentDataType.INTEGER)){
+        }
+        else if (en.getPersistentDataContainer().has(RealisticVehicles.SCRAPKEY, PersistentDataType.INTEGER)){
             event.getPlayer().sendMessage(ChatColor.GOLD+"Salvaging Wreck, Moving will cancel it!");
             new BukkitRunnable() {
                 int loops = 0;
@@ -71,7 +204,7 @@ public class EventListener implements Listener {
                 @Override
                 public void run() {
                     ComponentBuilder builder = new ComponentBuilder();
-                    builder.append("[");
+                    builder.append("[").color(net.md_5.bungee.api.ChatColor.BOLD);
                     for (int i = 1; i <= 10; i++){
                         if ((float) loops/maxTime >= 0.1*i){
                             builder.append(ChatColor.GREEN+"█");
@@ -79,7 +212,7 @@ public class EventListener implements Listener {
                             builder.append(ChatColor.GRAY+"█");
                         }
                     }
-                    builder.append("]");
+                    builder.append("]").color(net.md_5.bungee.api.ChatColor.BOLD);
                     event.getPlayer().spigot().sendMessage(ChatMessageType.ACTION_BAR, builder.create());
 
                     if (startLoc.distanceSquared(event.getPlayer().getLocation()) > 1){
@@ -106,9 +239,40 @@ public class EventListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onPlayerFire(PlayerInteractEvent e){
+    @EventHandler(priority = EventPriority.HIGH)
+    public void onPlayerInteract(PlayerInteractEvent e){
         e.setCancelled(fireWeapons(e.getItem(), e.getPlayer(), e.getAction()));
+
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null && e.getItem().getItemMeta().getPersistentDataContainer().has(ItemGenerator.JSONSAVE, PersistentDataType.STRING)) {
+            RayTraceResult hit = e.getPlayer().getWorld().rayTraceBlocks(e.getPlayer().getEyeLocation(), e.getPlayer().getLocation().getDirection(), 4.5);
+            if (hit != null && hit.getHitBlock() != null){
+                ItemGenerator.spawnVehicleFromItem(e.getItem(), hit.getHitPosition().toLocation(e.getPlayer().getWorld()));
+                ItemStack[] inv = e.getPlayer().getInventory().getStorageContents();
+                inv[e.getPlayer().getInventory().first(e.getItem())] = null;
+                e.getPlayer().getInventory().setStorageContents(inv);
+            }
+        }
+
+        if (e.getItem() != null && e.getItem().getItemMeta().getDisplayName().equals(ChatColor.GOLD+""+ChatColor.ITALIC+"Crowbar")){
+            e.setCancelled(true);
+            float minDist = 100;
+            Trailer fTrailer = null;
+            for (FixedUpdate update : Updates.fixedUpdates){
+                if (update instanceof Trailer trailer){
+                    if (e.getPlayer().getLocation().distanceSquared(trailer.getLoc()) < minDist){
+                        minDist = (float) e.getPlayer().getLocation().distanceSquared(trailer.getLoc());
+                        fTrailer = trailer;
+                    }
+                }
+            }
+            if (fTrailer != null) {
+                if (e.getPlayer().isSneaking()) {
+                    TrailerMenu.openTrailerInventory(e.getPlayer(), fTrailer);
+                } else {
+                    fTrailer.hitchInteract(e.getPlayer());
+                }
+            }
+        }
     }
 
     @EventHandler
@@ -134,17 +298,6 @@ public class EventListener implements Listener {
             event.getPlayer().setInvulnerable(false);
             vehicle.playerExitedVehicle(false);
             vehicle.getBaseSeat().eject();
-        }
-    }
-
-    @EventHandler
-    public void onPlayerInteract(PlayerInteractEvent e){
-        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null && e.getItem().getItemMeta().getPersistentDataContainer().has(ItemGenerator.JSONSAVE, PersistentDataType.STRING)) {
-            RayTraceResult hit = e.getPlayer().getWorld().rayTraceBlocks(e.getPlayer().getEyeLocation(), e.getPlayer().getLocation().getDirection(), 4.5);
-            if (hit != null && hit.getHitBlock() != null){
-                ItemGenerator.spawnVehicleFromItem(e.getItem(), hit.getHitPosition().toLocation(e.getPlayer().getWorld()));
-                e.getPlayer().getInventory().remove(e.getItem());
-            }
         }
     }
 
@@ -205,7 +358,6 @@ public class EventListener implements Listener {
                 if (heldItem.getType() == Material.LEVER){
                     aircraft.setFiring(true);
                 }  else if (heldItem.getType() == Material.WOODEN_HOE){
-                    //TODO Fix Missiles Not Firing, Fix Breaking Armour Stand.
                     if (action == Action.LEFT_CLICK_AIR || action == Action.LEFT_CLICK_BLOCK){
                         aircraft.cyclePylon();
                         aircraft.updateMissileItem();

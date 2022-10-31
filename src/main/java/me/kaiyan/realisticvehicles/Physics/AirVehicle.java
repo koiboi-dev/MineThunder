@@ -11,6 +11,7 @@ import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
 import org.bukkit.*;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
@@ -68,9 +69,9 @@ public class AirVehicle {
                                 acceling = true;
                             }
                             if (event.getPacket().getFloat().getValues().get(0) > 0) {
-                                yaw -= 1;
+                                yaw -= Math.min(1, getSpeed())*damageModel.getComponentDamagePercent(ComponentType.RUDDER);
                             } else if (event.getPacket().getFloat().getValues().get(0) < 0) {
-                                yaw += 1;
+                                yaw += Math.min(1, getSpeed())*damageModel.getComponentDamagePercent(ComponentType.RUDDER);
                             }
                         }
                     }
@@ -86,23 +87,27 @@ public class AirVehicle {
                     if (seatEnt.getPassengers().size() != 0) {
                         if (seatEnt.getPassengers().get(0) == event.getPlayer()) {
                             acceling = false;
-                            if (event.getPacket().getFloat().getValues().get(1) > 0) {
+                            if (event.getPacket().getFloat().getValues().get(1) > 0 && hasFuel) {
                                 accelerate(settings.getEnginePower());
                                 acceling = true;
                             } else if (event.getPacket().getFloat().getValues().get(1) < 0) {
-                                accelerate(-settings.getEnginePower());
+                                accelerate(-settings.getEnginePower()*0.25);
                                 acceling = true;
                             }
                             if (event.getPacket().getFloat().getValues().get(0) > 0) {
-                                yaw -= Math.min(1, getSpeed());
+                                yaw -= Math.min(1, getSpeed())*damageModel.getComponentDamagePercent(ComponentType.RUDDER);
                             } else if (event.getPacket().getFloat().getValues().get(0) < 0) {
-                                yaw += Math.min(1, getSpeed());
+                                yaw += Math.min(1, getSpeed())*damageModel.getComponentDamagePercent(ComponentType.RUDDER);
                             }
                         }
                     }
                 }
             });
         }
+    }
+
+    public void updateSeat(ArmorStand seat){
+        seatEnt = seat;
     }
 
     public void accelerate(double speed){
@@ -127,21 +132,21 @@ public class AirVehicle {
 
         if (yaw > pYaw) {
             if (yaw > 90 && pYaw < -90) {
-                yawVelo += settings.getYawSpeed();
+                yawVelo += settings.getYawSpeed() * damageModel.getComponentDamagePercent(ComponentType.AILERON);
                 //yaw += settings.getYawSpeed()*mod;
                 //roll = -currentRoll;
             } else {
-                yawVelo -= settings.getYawSpeed();
+                yawVelo -= settings.getYawSpeed() * damageModel.getComponentDamagePercent(ComponentType.AILERON);
                 //yaw -= settings.getYawSpeed()*mod;
                 //roll = currentRoll;
             }
         } else if (yaw < pYaw) {
             if (yaw < -90 && pYaw > 90) {
-                yawVelo -= settings.getYawSpeed();
+                yawVelo -= settings.getYawSpeed() * damageModel.getComponentDamagePercent(ComponentType.AILERON);
                 //yaw -= settings.getYawSpeed()*mod;
                 //roll = currentRoll;
             } else {
-                yawVelo += settings.getYawSpeed();
+                yawVelo += settings.getYawSpeed() * damageModel.getComponentDamagePercent(ComponentType.AILERON);
                 //yaw += settings.getYawSpeed()*mod;
                 //roll = -currentRoll;
             }
@@ -174,7 +179,7 @@ public class AirVehicle {
             pitch -= settings.getPitchSpeed()*mod*mult*elevatorHealth;
         }
         if (elevatorHealth < 0.5){
-            pitch += 0.5;
+            pitch += 0.6*((Math.random()-0.5)*2);
         }
 
         if (pitch < pPitch + settings.getPitchSpeed()+0.5 && pitch > pPitch - settings.getYawSpeed()+0.5){
@@ -190,7 +195,7 @@ public class AirVehicle {
     private float crashingHealth;
     boolean stalling = false;
     Random rand = new Random();
-    public void update(){
+    public void update(boolean extendedGear){
         if (getSpeed() > 0) {
             addSpeed(-((getSpeed() * getSpeed()) * settings.getDragCoefficient()));
         }
@@ -215,7 +220,12 @@ public class AirVehicle {
             moveBy.rotateAroundX(Math.toRadians(pitch));
             moveBy.rotateAroundY(-Math.toRadians(yaw));
             moveBy.multiply(getSpeed());
-            moveBy.subtract(new Vector(0, Math.max(0, Math.min(1, speed/2)), 0));
+            float yFall = (float) (0.75f-((getSpeed()/settings.getLiftSpeed()*0.6)));
+            System.out.println(damageModel.getComponentDamagePercent(ComponentType.WING));
+            yFall /= damageModel.getComponentDamagePercent(ComponentType.WING);
+            yFall = Math.max(0, yFall);
+
+            moveBy.subtract(new Vector(0, yFall, 0));
 
             if (!getWorld().isChunkLoaded((int) Math.floor(loc.clone().add(moveBy).getX()/16), (int) Math.floor(loc.clone().add(moveBy).getZ()/16))){
                 return;
@@ -248,8 +258,9 @@ public class AirVehicle {
 
         if (!collided) {
             addSpeed((pitch / 90) * 0.25);
+
             float yFall = (float) (0.75f-((getSpeed()/settings.getLiftSpeed()*0.6)));
-            yFall = Math.max(0, yFall);
+            yFall /= damageModel.getComponentDamagePercent(ComponentType.WING);
 
             if (getSpeed() < settings.getStallSpeed() && pitch < 80) {
                 yFall *= 1.25;
@@ -282,9 +293,12 @@ public class AirVehicle {
             Entity seated = seatEnt.getPassengers().get(0);
             if (!stalling) calRotate(seated);
         }
-
-        collide();
+        if (extendedGear) {
+            collide();
+        }
     }
+
+    protected boolean invulnerable = true;
 
     double ySpeed = 0;
     
@@ -299,8 +313,15 @@ public class AirVehicle {
             if (Objects.requireNonNull(hit.getHitBlock()).getType().isSolid()){
                 loc = hit.getHitPosition().toLocation(world);
                 collided = true;
-                //TODO damage landing gear on harsh roll at impact
-                if (damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR) == 0){
+                if (ySpeed >= 0.5){
+                    for (Component comp : damageModel.getComponents()) {
+                        if (comp.type == ComponentType.LANDINGGEAR){
+                            comp.health -= ySpeed*2;
+                        }
+                    }
+                }
+                System.out.println(damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR));
+                if (damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR) <= 0 && !invulnerable){
                     startCrashing();
                 }
                 if (roll > 1){
@@ -312,7 +333,7 @@ public class AirVehicle {
                         }
                     }
                 }
-                if (ySpeed < -0.2){
+                if (ySpeed < -0.2 && !invulnerable){
                     startCrashing();
                 }
                 roll = 0;
@@ -419,5 +440,17 @@ public class AirVehicle {
 
     public void setHasFuel(boolean hasFuel) {
         this.hasFuel = hasFuel;
+    }
+
+    public void setYaw(float yaw){
+        this.yaw = yaw;
+    }
+
+    public AirVehicleSettings getSettings() {
+        return settings;
+    }
+
+    public void setLoc(Location loc) {
+        this.loc = loc;
     }
 }
