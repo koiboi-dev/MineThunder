@@ -2,17 +2,14 @@ package me.kaiyan.realisticvehicles;
 
 import me.kaiyan.realisticvehicles.Counters.Updates;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Menus.TrailerMenu;
 import me.kaiyan.realisticvehicles.Menus.VehicleMenu;
-import me.kaiyan.realisticvehicles.ModelHandlers.Model;
+import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.*;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.ChatColor;
@@ -33,7 +30,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
-import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.util.*;
@@ -84,13 +80,6 @@ public class EventListener implements Listener {
                     Car car = (Car) VehicleSaver.fromJson(info[3].split("@")[0]).createCraft(loc);
                     //car.resetModels(seat);
                     car.setYaw(Float.parseFloat(info[7]));
-                    if (info[3].split("@").length != 1){
-                        try {
-                            car.getHarvester().setInv(Trailer.inventoryFromBase64(info[3].split("@")[1]));
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
                     car.getBaseSeat().addPassenger(event.getPlayer());
                 }
                 case TANK -> {
@@ -254,6 +243,8 @@ public class EventListener implements Listener {
         }
 
         if (e.getItem() != null && e.getItem().getItemMeta().getDisplayName().equals(ChatColor.GOLD+""+ChatColor.ITALIC+"Crowbar")){
+            RealisticVehicles.wakeVehicles();
+
             e.setCancelled(true);
             float minDist = 100;
             Trailer fTrailer = null;

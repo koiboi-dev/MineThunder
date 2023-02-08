@@ -7,7 +7,7 @@ import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
-import me.kaiyan.realisticvehicles.ModelHandlers.FakeRadarTarget;
+import me.kaiyan.realisticvehicles.Models.FakeRadarTarget;
 import me.kaiyan.realisticvehicles.Physics.Missile;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;

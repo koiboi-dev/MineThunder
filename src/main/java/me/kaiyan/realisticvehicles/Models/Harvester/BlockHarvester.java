@@ -1,4 +1,4 @@
-package me.kaiyan.realisticvehicles.ModelHandlers.Harvester;
+package me.kaiyan.realisticvehicles.Models.Harvester;
 
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;

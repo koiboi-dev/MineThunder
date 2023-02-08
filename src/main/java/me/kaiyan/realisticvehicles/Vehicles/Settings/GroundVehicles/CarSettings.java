@@ -2,7 +2,7 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.ModelHandlers.Harvester.BlockHarvester;
+import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
 import org.bukkit.util.Vector;
 
 import java.util.*;

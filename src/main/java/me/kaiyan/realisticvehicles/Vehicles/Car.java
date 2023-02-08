@@ -8,9 +8,10 @@ import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
-import me.kaiyan.realisticvehicles.ModelHandlers.Harvester.BlockHarvester;
-import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
-import me.kaiyan.realisticvehicles.ModelHandlers.Model;
+import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
+import me.kaiyan.realisticvehicles.Models.InventoryHandler;
+import me.kaiyan.realisticvehicles.Models.MissileHolder;
+import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
@@ -18,15 +19,16 @@ import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.minecraft.network.syncher.DataWatcherObject;
 import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.*;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.util.Vector;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
@@ -81,19 +83,6 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
     }
 
     private int cooldown = 40;
-
-    public void resetModels(ArmorStand seatEnt){
-        //model.clearAll();
-        //model = new Model(seatEnt, getSettings().getSeatPos(), settings.getOffset(), true);
-        //this.seatEnt = seatEnt;
-        //updateSeat(seatEnt);
-        /*for (Map.Entry<int[], Integer> stand : settings.getModels().entrySet()){
-            model.addCorner(
-                    stand.getKey(),
-                    (ArmorStand) RealisticVehicles.setTexture((LivingEntity) seatEnt.getWorld().spawnEntity(getLoc(), EntityType.ARMOR_STAND), stand.getValue(), stand.getValue())
-            );
-        }*/
-    }
 
     @Override
     public void OnFixedUpdate() {
@@ -211,12 +200,12 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
 
     @Override
     public Shell[] getShells() {
-        return new Shell[3];
+        return new Shell[] {new Shell()};
     }
 
     @Override
     public int[] getShellsAmmo() {
-        return new int[3];
+        return new int[] {0, 0, 0};
     }
 
     @Override
@@ -295,10 +284,10 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
     @Override
     public void sleep() {
         if (harvester != null) {
-            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson() + "@" + Trailer.inventoryToBase64(harvester.getInv()));
+            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
             closeThis(0);
         } else {
-            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson()+"@");
+            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
             closeThis(0);
         }
     }

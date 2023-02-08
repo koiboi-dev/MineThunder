@@ -1,5 +1,20 @@
 resource-pack: https://www.dropbox.com/s/a0tvp6mris6xjg0/TankPackV23.zip?dl=1
 
+# Vehicle Sleep Settings
+# Vehicle sleep is when the vehicle stops being calculated for physics and other events
+# This means that they are uninteractable and will be woken up when someone tries to open them
+# Trailers dont sleep (except on server reset)
+
+# How many mins until the vehicle shall "sleep"
+sleep-time: 5
+
+# Should we wake vehicles around players constantly?
+# Can cause excess lag
+auto-wakeup: false
+# How often should we wakeup vehicles around players (seconds, no decimals)
+auto-wakeup-time: 60
+
+
 armor-repair-cost: 200
 component-repair-cost: 200
 scrap-reward: 500

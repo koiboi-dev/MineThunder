@@ -3,11 +3,8 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.Traversable;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
-import me.kaiyan.realisticvehicles.DataTypes.TrailerHitch;
-import me.kaiyan.realisticvehicles.ModelHandlers.Model;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
-import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import net.minecraft.util.Tuple;
 import org.bukkit.util.Vector;
 

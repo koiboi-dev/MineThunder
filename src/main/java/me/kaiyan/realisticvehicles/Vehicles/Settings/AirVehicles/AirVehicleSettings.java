@@ -1,10 +1,9 @@
 package me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles;
 
-import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
-import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
+import me.kaiyan.realisticvehicles.Models.MissileSlot;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 import net.minecraft.util.Tuple;
 import org.bukkit.util.Vector;

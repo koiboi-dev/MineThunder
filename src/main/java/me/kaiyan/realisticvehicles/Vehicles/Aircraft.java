@@ -12,8 +12,8 @@ import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.RadarTarget;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
-import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
-import me.kaiyan.realisticvehicles.ModelHandlers.Model;
+import me.kaiyan.realisticvehicles.Models.MissileHolder;
+import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.Physics.AirVehicle;
 import me.kaiyan.realisticvehicles.Physics.Missile;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
@@ -295,7 +295,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     final Inventory inv;
     boolean exited = true;
 
-    public int getSelectedPylon() {
+    public int getSelectedPylon(){
         return selectedPylon;
     }
 
@@ -575,18 +575,5 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         }
         model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
         closeThis(0);
-    }
-
-    public void resetModels(ArmorStand seatEnt) {
-        //model.clearAll();
-        //model = new Model(seatEnt, settings.getSeatPos(), settings.getMidOffset(), false);
-        //this.seatEnt = seatEnt;
-        //updateSeat(seatEnt);
-        /*for (Map.Entry<int[], Tuple<Integer, Integer>> stand : settings.getModels().entrySet()){
-            model.addCorner(
-                    stand.getKey(),
-                    (ArmorStand) RealisticVehicles.setTexture((LivingEntity) seatEnt.getWorld().spawnEntity(getLoc(), EntityType.ARMOR_STAND), stand.getValue().a(), stand.getValue().b())
-            );
-        }*/
     }
 }

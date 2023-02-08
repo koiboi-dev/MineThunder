@@ -1,7 +1,6 @@
-package me.kaiyan.realisticvehicles.ModelHandlers;
+package me.kaiyan.realisticvehicles.Models;
 
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
-import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.util.Vector;

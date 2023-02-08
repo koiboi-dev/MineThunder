@@ -17,11 +17,10 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nullable;
-import java.util.List;
 import java.util.Objects;
 import java.util.Random;
 
-public class AirVehicle {
+public class AirVehicle{
     private Location loc;
     private final World world;
 

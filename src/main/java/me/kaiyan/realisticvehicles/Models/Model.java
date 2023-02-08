@@ -1,4 +1,4 @@
-package me.kaiyan.realisticvehicles.ModelHandlers;
+package me.kaiyan.realisticvehicles.Models;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.RealisticVehicles;

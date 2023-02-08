@@ -1,8 +1,7 @@
 package me.kaiyan.realisticvehicles.Vehicles.Settings;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
-import me.kaiyan.realisticvehicles.ModelHandlers.Harvester.BlockHarvester;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
+import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
 import org.bukkit.util.Vector;
 
 import java.util.*;

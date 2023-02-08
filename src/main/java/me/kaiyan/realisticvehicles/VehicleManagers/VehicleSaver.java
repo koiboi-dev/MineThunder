@@ -9,8 +9,11 @@ import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Aircraft;
 import me.kaiyan.realisticvehicles.Vehicles.Car;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
+import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import org.bukkit.Location;
+import org.bukkit.inventory.Inventory;
 
 import java.util.UUID;
 

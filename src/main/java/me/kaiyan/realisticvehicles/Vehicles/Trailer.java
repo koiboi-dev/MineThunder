@@ -7,8 +7,9 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
 import me.kaiyan.realisticvehicles.DataTypes.TrailerHitch;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
-import me.kaiyan.realisticvehicles.ModelHandlers.Harvester.BlockHarvester;
-import me.kaiyan.realisticvehicles.ModelHandlers.Model;
+import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
+import me.kaiyan.realisticvehicles.Models.InventoryHandler;
+import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
 import org.bukkit.*;
@@ -33,14 +34,14 @@ public class Trailer implements FixedUpdate, Sleepable {
     private TrailerHitch hitched;
     private TrailerHitch hitch;
     private final TrailerSettings settings;
-    float yaw = 0;
+    private float yaw = 0;
 
     private final Model model;
 
     private Player hitcher;
     private boolean hitchingMode;
 
-    private final Inventory[] inventory;
+    private Inventory[] inventory;
 
     private final BlockHarvester harvester;
 
@@ -168,6 +169,9 @@ public class Trailer implements FixedUpdate, Sleepable {
     public Inventory[] getInventory() {
         return inventory;
     }
+    public void setInventory(Inventory[] inventories) {
+        this.inventory = inventories;
+    }
 
     public TrailerSettings getSettings() {
         return settings;
@@ -178,45 +182,7 @@ public class Trailer implements FixedUpdate, Sleepable {
     }
 
 
-    //Credit to matanos https://www.spigotmc.org/members/matanos.6931/
-    public static String inventoryToBase64(Inventory inventory) {
-        try {
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
 
-            dataOutput.writeInt(inventory.getSize());
-
-            for (int i = 0; i < inventory.getSize(); i++) {
-                dataOutput.writeObject(inventory.getItem(i));
-            }
-
-            dataOutput.close();
-            return Base64Coder.encodeLines(outputStream.toByteArray());
-
-            //Converts the inventory and its contents to base64, This also saves item meta-data and inventory type
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not convert inventory to base64.", e);
-        }
-    }
-
-    //Credit to matanos https://www.spigotmc.org/members/matanos.6931/
-    public static Inventory inventoryFromBase64(String data) throws IOException {
-        try {
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
-            BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
-            Inventory inventory = Bukkit.createInventory(null, dataInput.readInt());
-
-            for (int i = 0; i < inventory.getSize(); i++) {
-                inventory.setItem(i, (ItemStack) dataInput.readObject());
-            }
-
-            dataInput.close();
-            return inventory;
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new IOException("Could not decode inventory.", e);
-        }
-    }
 
     int sleepTicks;
     @Override
@@ -231,10 +197,11 @@ public class Trailer implements FixedUpdate, Sleepable {
 
     @Override
     public void sleep() {
-        StringBuilder data = new StringBuilder();
-        for (Inventory inv : inventory){
-            data.append(";").append(inventoryToBase64(inv));
-        }
-        model.sleepStands(VehicleType.TRAILER,getSettings().getName(), yaw, data.toString());
+        String key = null;
+        model.sleepStands(VehicleType.TRAILER, getSettings().getName(), yaw, key);
+    }
+
+    public void setYaw(float yaw) {
+        this.yaw = yaw;
     }
 }

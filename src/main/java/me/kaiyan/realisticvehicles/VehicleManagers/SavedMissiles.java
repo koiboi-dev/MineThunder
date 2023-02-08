@@ -2,8 +2,8 @@ package me.kaiyan.realisticvehicles.VehicleManagers;
 
 import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
-import me.kaiyan.realisticvehicles.ModelHandlers.MissileHolder;
-import me.kaiyan.realisticvehicles.ModelHandlers.MissileSlot;
+import me.kaiyan.realisticvehicles.Models.MissileHolder;
+import me.kaiyan.realisticvehicles.Models.MissileSlot;
 import org.bukkit.Location;
 
 import java.io.Serializable;

@@ -28,6 +28,13 @@ public class Shell {
 
     public final int buyAmount;
 
+    /**Creates a false shell, used to get pass JSON's NaN restrictions.
+    */
+    public Shell(){
+        reloadTime = 1;
+        buyAmount = 100;
+    }
+
     /**
      * Creates a new shell
      * @param power Power to fire at (Speed)
