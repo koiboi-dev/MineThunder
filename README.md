@@ -1,9 +1,9 @@
 # MineThunder
 AKA: Realistic Vehicles
 
-#CURRENTLY VERY WORK IN PROGRESS, DO NOT USE ON PRODUCTION SERVERS AS IT MAY RESET PLAYER INVENTORIES.
-
 Adds Semi-Realistic planes, cars and tanks to Minecraft!
+
+# CURRENTLY VERY WORK IN PROGRESS, DO NOT USE ON PRODUCTION SERVERS AS IT MAY RESET PLAYER INVENTORIES.
 
 Planes follow the cursor and have flight mechanics
 
