@@ -3,6 +3,7 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
+import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
 import me.kaiyan.realisticvehicles.Models.MissileSlot;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 import net.minecraft.util.Tuple;
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class AirVehicleSettings extends VehicleSettings {
-    public static List<AirVehicleSettings> registers = new ArrayList<>();
+    public static final List<AirVehicleSettings> registers = new ArrayList<>();
 
     // kg
     private double weight;
@@ -44,8 +45,8 @@ public class AirVehicleSettings extends VehicleSettings {
     private final float midOffset;
     private final boolean shiftGrid;
 
-    public AirVehicleSettings(String type, int textureID, float price, float midOffset, boolean shiftGrid) {
-        super(type, textureID, VehicleType.AIR, price);
+    public AirVehicleSettings(String type, int textureID, float price, float midOffset, boolean shiftGrid, String shopGroup) {
+        super(type, textureID, VehicleType.AIR, price, shopGroup);
         this.midOffset = midOffset;
         this.shiftGrid = shiftGrid;
     }
@@ -114,6 +115,7 @@ public class AirVehicleSettings extends VehicleSettings {
 
     public void register(){
         registers.add(this);
+        PurchaseMenu.addVehicleToShopList(this);
     }
 
     public double getStallSpeed() {

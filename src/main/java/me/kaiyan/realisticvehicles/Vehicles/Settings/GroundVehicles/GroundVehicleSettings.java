@@ -25,10 +25,10 @@ public class GroundVehicleSettings extends VehicleSettings {
     GroundVehicle.SteerType steerType;
     Traversable traversable;
 
-    List<Tuple<Vector, TrailerTypes>> hitches = new ArrayList<>();
+    final List<Tuple<Vector, TrailerTypes>> hitches = new ArrayList<>();
 
-    public GroundVehicleSettings(String type, VehicleType vType,int textureID, float price) {
-        super(type, textureID, vType, price);
+    public GroundVehicleSettings(String type, VehicleType vType,int textureID, float price, String shopGroup) {
+        super(type, textureID, vType, price, shopGroup);
     }
 
     public void setVehicleData(double acceleration, double brakeForce, float turnSpeed, double turnDeaccel, double maxSpeed, double drag, double reverseAccel, double reverseMax, GroundVehicle.SteerType steerType, Traversable traversable) {

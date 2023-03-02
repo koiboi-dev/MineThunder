@@ -16,9 +16,14 @@ import org.ipvp.canvas.mask.Mask;
 import org.ipvp.canvas.slot.Slot;
 import org.ipvp.canvas.type.ChestMenu;
 
+import javax.annotation.Nonnull;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class PurchaseMenu {
+    public static HashMap<String, List<VehicleSettings>> extraVehicles = new HashMap<>();
     public static void openPurchaseMenu(Player player){
         Menu menu = ChestMenu.builder(3).title("Vehicle Shop").build();
         Mask mask = BinaryMask.builder(menu)
@@ -28,7 +33,7 @@ public class PurchaseMenu {
                 .pattern("111111111")
                 .build();
         mask.apply(menu);
-        generateFolderSlot(menu, 11, "Cars", 800, List.of());
+        /*generateFolderSlot(menu, 11, "Cars", 800, List.of());
         generateFolderSlot(menu, 12, "Planes", 601, List.of(
                 VehicleSettings.getSettingsFromType("MIG 31"),
                 VehicleSettings.getSettingsFromType("F-15")
@@ -43,10 +48,16 @@ public class PurchaseMenu {
                 VehicleSettings.getSettingsFromType("Jerry Deer's Model 2 Tractor")
         ));
         generateFolderSlot(menu, 16, "Tanks", 503, List.of(
-                VehicleSettings.getSettingsFromType("Challenger II"),
-                VehicleSettings.getSettingsFromType("Leopard 2A7")
-        ));
+                VehicleSettings.getSettingsFromType("Challenger II")
+                //VehicleSettings.getSettingsFromType("Leopard 2A7")
+        ));*/
+        int loops = 0;
+        for (Map.Entry<String, List<VehicleSettings>> map : extraVehicles.entrySet()){
+            generateFolderSlot(menu, 10+loops, map.getKey(), map.getValue().get(0).getTextureID(), map.getValue());
+            loops++;
+        }
         menu.open(player);
+
     }
 
     public static void generateFolderSlot(Menu bMenu, int id, String name, int vId, List<VehicleSettings> vehicles){
@@ -84,6 +95,18 @@ public class PurchaseMenu {
             }
             menu.open(p);
         });
+    }
+
+    public static void addVehicleToShopList(@Nonnull VehicleSettings settings){
+        if (PurchaseMenu.extraVehicles.containsKey(settings.getShopGroup())){
+            PurchaseMenu.extraVehicles.get(settings.getShopGroup()).add(settings);
+        } else {
+            List<VehicleSettings> list = new ArrayList<>();
+            list.add(settings);
+            PurchaseMenu.extraVehicles.put(settings.getShopGroup(), list);
+        }
+        System.out.println("Added new vehicle: "+settings.getType()+" : "+settings.getShopGroup());
+        System.out.println(extraVehicles);
     }
 
     public static ItemStack getVehicleItem(String name, int id){

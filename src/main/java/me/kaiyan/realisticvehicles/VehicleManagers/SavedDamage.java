@@ -9,8 +9,8 @@ import java.io.Serializable;
 import java.util.List;
 
 public class SavedDamage implements Serializable {
-    List<ArmourPlate> plates;
-    List<Component> comps;
+    final List<ArmourPlate> plates;
+    final List<Component> comps;
 
     public SavedDamage(DamageModel model){
         plates = model.getArmour();

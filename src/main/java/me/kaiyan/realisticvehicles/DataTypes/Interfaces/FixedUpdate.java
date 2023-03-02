@@ -1,7 +1,6 @@
 package me.kaiyan.realisticvehicles.DataTypes.Interfaces;
 
 import me.kaiyan.realisticvehicles.Counters.Updates;
-import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 
 public interface FixedUpdate {
     void OnFixedUpdate();

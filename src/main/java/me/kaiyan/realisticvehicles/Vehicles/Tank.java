@@ -37,7 +37,6 @@ import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
 import java.util.*;
-import java.util.List;
 
 import static me.kaiyan.realisticvehicles.RealisticVehicles.SCRAPKEY;
 
@@ -73,7 +72,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
     private final Inventory inv;
     private String reloadState = "|";
 
-    List<TrailerHitch> hitches = new ArrayList<>();
+    final List<TrailerHitch> hitches = new ArrayList<>();
 
     public Tank(Location loc, String type) throws InvalidTypeException {
         super(loc, TankSettings.getTankSettings(type));
@@ -411,7 +410,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
             driverSeat.getWorld().playSound(getLoc(), Sound.ENTITY_GENERIC_EXPLODE, SoundCategory.HOSTILE, 1, 1);
 
             if (damageModel.areAllCompsActive(ComponentType.GUNBARREL) && damageModel.areAllCompsActive(ComponentType.GUNLOADER)) {
-                new ProjectileShell(vec.toLocation(driverSeat.getWorld()), turretYaw, turretPitch, seatedPlayer, shells[shellType]);
+                new ProjectileShell(vec.toLocation(driverSeat.getWorld()), turretYaw, turretPitch, seatedPlayer, shells[shellType], 0);
             } else {
                 driverSeat.getWorld().playSound(getLoc(), Sound.BLOCK_CHEST_CLOSE, SoundCategory.HOSTILE, 1, 0.5f);
             }

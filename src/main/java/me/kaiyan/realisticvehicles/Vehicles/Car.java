@@ -9,7 +9,6 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
-import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
@@ -25,15 +24,13 @@ import org.bukkit.Location;
 import org.bukkit.Particle;
 import org.bukkit.World;
 import org.bukkit.entity.*;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.util.Vector;
 
-import java.io.IOException;
 import java.util.*;
 
 public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
-    private Model model;
-    private Entity seatEnt;
+    private final Model model;
+    private final Entity seatEnt;
     private final DamageModel damageModel;
     private final CarSettings settings;
 
@@ -41,7 +38,7 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
 
     private final World world;
 
-    List<TrailerHitch> hitches = new ArrayList<>();
+    final List<TrailerHitch> hitches = new ArrayList<>();
 
     private final BlockHarvester harvester;
     private boolean trigger;
@@ -149,7 +146,7 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
 
     @Override
     public void explode() {
-        world.createExplosion(getLoc(), (float) (getSpeed()*1.5f));
+        world.createExplosion(getLoc(), (float) Math.min(getSpeed()*1.5f, 8));
         scrap(false);
     }
 
@@ -200,7 +197,7 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
 
     @Override
     public Shell[] getShells() {
-        return new Shell[] {new Shell()};
+        return new Shell[] {null, null, null};
     }
 
     @Override

@@ -11,7 +11,7 @@ description: Adds realistic vehicles
 main: me.kaiyan.realisticvehicles.RealisticVehicles
 
 ## You can change this to link to your website or repository. You can also remove this line if you want to.
-website: none
+website: https://github.com/koiboi-dev/MineThunder
 
 ## This value is automatically replaced by the version specified in your pom.xml file.
 ## Do not change this.

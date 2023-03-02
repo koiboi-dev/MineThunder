@@ -36,7 +36,7 @@ public class Missile implements FixedUpdate {
         this.shooter = shooter;
         this.player = player;
 
-        this.speed = speed;
+        this.speed = speed+settings.getSpeed();
         start();
     }
 
@@ -44,7 +44,7 @@ public class Missile implements FixedUpdate {
 
     @Override
     public void OnFixedUpdate() {
-        if (loc.getBlock().getType().isSolid()){
+        if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()){
             explode();
             return;
         }
@@ -82,6 +82,9 @@ public class Missile implements FixedUpdate {
         loc.add(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(Math.toRadians(yaw)).multiply(getSettings().getSpeed()));
 
         fuel -= getSettings().getBurnRate();
+        if (fuel <= 0){
+            explode();
+        }
 
         Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc, 5, 1.5, 1.5, 1.5, 0.5, new Particle.DustOptions(Color.fromRGB(200, 200, 200), 8), true);
 

@@ -35,11 +35,13 @@ import org.bukkit.util.Vector;
 
 import java.util.*;
 
+import static me.kaiyan.realisticvehicles.Physics.Missile.getYawDifference;
+
 public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdate, RadarTarget, Sleepable {
 
     //private final Entity baseEnt;
-    private Model model;
-    private Entity seatEnt;
+    private final Model model;
+    private final Entity seatEnt;
     private Player seatedPlayer;
 
     private final FuelTank fuelTank;
@@ -174,7 +176,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                             addSpeed(-crashChange);
                             addPitch((float) ((getSpeed() / 2) * 10));
                             multiplyRoll(1.25f);
-                            getWorld().createExplosion(getLoc(), (float) ((settings.getExplodeSpeed() / getSpeed()) * settings.getWeight()));
+                            getWorld().createExplosion(getLoc(), (float) Math.min(((settings.getExplodeSpeed() / getSpeed()) * settings.getWeight()), 8));
                             for (Component comp : getDamageModel().getComponents()) {
                                 comp.health -= 0.5;
                                 if (comp.health <= 0) {
@@ -182,14 +184,17 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                                 }
                             }
                             if (this.seatedPlayer != null) {
-                                Updates.expectedDeaths.put(seatedPlayer, new DeathMessage(seatedPlayer.getName() + " crashed their plane!"));
+                                Updates.expectedDeaths.put(seatedPlayer, new DeathMessage(seatedPlayer.getName() + " crashed their plane!", -5));
                             }
                             if (getSpeed() < 1) {
                                 explode();
                             }
                         } else if (getSpeed() > 1) {
                             startCrashing();
-                            getWorld().createExplosion(getLoc(), (float) (settings.getWeight() + (getSpeed() / settings.getWeight())));
+                            if (this.seatedPlayer != null) {
+                                Updates.expectedDeaths.put(seatedPlayer, new DeathMessage(seatedPlayer.getName() + " crashed their plane!", -5));
+                            }
+                            getWorld().createExplosion(getLoc(), (float) Math.min(settings.getWeight() + (getSpeed() / settings.getWeight()), 8));
                         } else {
                             Vector dir;
                             if (speed >= 0) {
@@ -262,7 +267,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                 }
                 bullets--;
                 System.out.println(fireFrom);
-                new ProjectileShell(fireFrom.toLocation(getWorld()), (float) getYaw(), (float) getPitch(), seatedPlayer, settings.getBullet());
+                new ProjectileShell(fireFrom.toLocation(getWorld()), (float) getYaw(), (float) getPitch(), seatedPlayer, settings.getBullet(), (float) getSpeed());
                 seatedPlayer.getWorld().playSound(fireFrom.toLocation(getWorld()), Sound.ENTITY_GENERIC_EXPLODE, 30, 2);
             }
             lastFiredTick = 0;
@@ -273,27 +278,40 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     private int selectedPylon = -1;
     public void attemptFireMissile(){
         missiles.fireMissile(selectedPylon, getLoc(), getVehicleYaw(), getVehiclePitch(), getRoll(), (float) getSpeed(), this, seatedPlayer);
+        seatedPlayer.sendMessage("FIRED MISSILE!");
+        selectedPylon = -1;
     }
 
     public void updateMissileItem(){
         if (seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT) != null && missiles.getMissiles().get(selectedPylon).getSettings() != null){
+            ItemStack item = seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT);
+            ItemMeta meta = item.getItemMeta();
+            assert meta != null;
+            meta.setDisplayName(selectedPylon+" :Selected: "+missiles.getMissiles().get(selectedPylon).getSettings().getName());
+            meta.setCustomModelData(missiles.getMissiles().get(selectedPylon).getSettings().getTexID());
+            item.setItemMeta(meta);
+            System.out.println("Updated!");
+        } else {
             ItemStack item = seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT);
             if (item == null){
                 return;
             }
             ItemMeta meta = item.getItemMeta();
             assert meta != null;
-            meta.setDisplayName("Selected: "+missiles.getMissiles().get(selectedPylon).getSettings().getName());
-            meta.setCustomModelData(missiles.getMissiles().get(selectedPylon).getSettings().getTexID());
+            meta.setDisplayName(selectedPylon+" :Selected: NONE");
+            meta.setCustomModelData(0);
             item.setItemMeta(meta);
-            System.out.println("Updated!");
         }
     }
 
     Player invOwner = null;
+
+    public ItemStack[] getPlayerInv() {
+        return playerInv;
+    }
+
     ItemStack[] playerInv;
     final Inventory inv;
-    boolean exited = true;
 
     public int getSelectedPylon(){
         return selectedPylon;
@@ -313,7 +331,6 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     boolean wasCreative = false;
     @Override
     public void playerEnteredVehicle(Player p) {
-        exited = false;
         RealisticVehicles.debugLog("Enter");
         if (seatedPlayer == null) {
             playerInv = p.getInventory().getContents();
@@ -327,34 +344,6 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
 
     @Override
     public void playerExitedVehicle(boolean skipEject) {
-        /*if (seatedPlayer != null && !exited) {
-            exited = true;
-            RealisticVehicles.debugLog("Exit");
-            seatedPlayer.setInvulnerable(false);
-            seatedPlayer.getInventory().clear();
-            seatedPlayer.getInventory().setContents(playerInv);
-            new BukkitRunnable() {
-                @Override
-                public void run() {
-                    if (wasCreative){
-                        seatedPlayer.setGameMode(GameMode.CREATIVE);
-                    }
-                }
-            }.runTaskLater(RealisticVehicles.getInstance(), 1);
-            if (!skipEject) {
-                new BukkitRunnable() {
-                    @Override
-                    public void run() {
-                        if (seatEnt.getPassengers().get(0) != null) {
-                            seatEnt.eject();
-                        }
-                    }
-                }.runTaskLater(RealisticVehicles.getInstance(), 1);
-            }
-            playerInv = null;
-            invOwner = null;
-        }*/
-        exited = true;
         if (!skipEject){
             new BukkitRunnable() {
                 @Override
@@ -430,11 +419,6 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     }
 
     @Override
-    public DamageModel getDamageModel() {
-        return super.getDamageModel();
-    }
-
-    @Override
     public double getTurretYaw() {
         return 0;
     }
@@ -446,7 +430,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
 
     @Override
     public void explode() {
-        getWorld().createExplosion(getLoc(), (float) (settings.getWeight()+(getSpeed()/settings.getWeight())));
+        getWorld().createExplosion(getLoc(), (float) Math.min(settings.getWeight()+(getSpeed()/settings.getWeight()), 8));
         playerExitedVehicle(false);
         closeThis(1);
     }
@@ -480,21 +464,16 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     public void displayActionBar() {
         ComponentBuilder builder = new ComponentBuilder();
         boolean found = false;
-        for (FixedUpdate update : Updates.fixedUpdates) {
-            if (update instanceof RadarTarget inter) {
-                double highestSig = 0;
-                if (inter == this){
-                    continue;
-                }
-                float angle = (float) (Math.toDegrees(Math.atan2(inter.getLoc().getX()-getLoc().getX(), inter.getLoc().getZ()-getLoc().getZ())));
-                if (Math.abs(Missile.getYawDifference(getVehicleYaw(), angle)) < 45) {
-                    if (highestSig < inter.getLoc().distanceSquared(getLoc())){
-                        found = true;
-                        break;
+        if (selectedPylon != -1 && getMissileHolder().getMissiles().get(selectedPylon).getSettings() != null) {
+            for (FixedUpdate update : Updates.fixedUpdates) {
+                if (update instanceof RadarTarget inter) {
+                    if (inter == this) {
+                        continue;
                     }
-                }
-                if (getLoc().distanceSquared(inter.getLoc()) < 144){
-                    explode();
+                    float angle = (float) (Math.toDegrees(Math.atan2(inter.getLoc().getX() - getLoc().getX(), inter.getLoc().getZ() - getLoc().getZ())));
+                    if (Math.abs(getYawDifference((float) getYaw(), angle)) < getMissileHolder().getMissiles().get(selectedPylon).getSettings().getPassiveScanAngle()) {
+                        found = true;
+                    }
                 }
             }
         }
@@ -531,16 +510,6 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     @Override
     public void flashModel() {
         getDamageModel().flashAll(seatEnt.getWorld(), getLoc());
-    }
-
-    @Override
-    public VehicleType getVehicleType() {
-        return VehicleType.AIR;
-    }
-
-    @Override
-    public VehicleInterface getVehicleInterface() {
-        return this;
     }
 
     @Override

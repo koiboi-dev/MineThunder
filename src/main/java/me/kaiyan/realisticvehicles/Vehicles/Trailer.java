@@ -8,7 +8,6 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
 import me.kaiyan.realisticvehicles.DataTypes.TrailerHitch;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
-import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
@@ -18,19 +17,12 @@ import org.bukkit.entity.EntityType;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Map;
 
 public class Trailer implements FixedUpdate, Sleepable {
-    private Location loc;
+    private final Location loc;
     private TrailerHitch hitched;
     private TrailerHitch hitch;
     private final TrailerSettings settings;

@@ -3,6 +3,7 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
 import org.bukkit.util.Vector;
 
 import javax.annotation.Nonnull;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class TankSettings extends GroundVehicleSettings{
-    public static List<TankSettings> register = new ArrayList<>();
+    public static final List<TankSettings> register = new ArrayList<>();
 
     Vector seatRaisedPos;
     Vector gunBarrelEnd;
@@ -28,7 +29,7 @@ public class TankSettings extends GroundVehicleSettings{
 
     DamageModel damageModel;
 
-    Shell[] shells = new Shell[3];
+    final Shell[] shells = new Shell[3];
 
     /**
      *  @param type Tank Name
@@ -38,8 +39,8 @@ public class TankSettings extends GroundVehicleSettings{
      *                  turret: texID+1
      *                  gun: texID+2
      */
-    public TankSettings(String type, int textureID, float price){
-        super(type, VehicleType.TANK,textureID, price);
+    public TankSettings(String type, int textureID, float price, String shopGroup){
+        super(type, VehicleType.TANK,textureID, price, shopGroup);
     }
 
     /**
@@ -84,6 +85,7 @@ public class TankSettings extends GroundVehicleSettings{
 
     public void register(){
         register.add(this);
+        PurchaseMenu.addVehicleToShopList(this);
     }
 
     public static TankSettings getTankSettings(String type){

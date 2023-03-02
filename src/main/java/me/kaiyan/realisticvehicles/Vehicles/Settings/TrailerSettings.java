@@ -1,13 +1,14 @@
 package me.kaiyan.realisticvehicles.Vehicles.Settings;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrailerTypes;
+import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
 import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
 import org.bukkit.util.Vector;
 
 import java.util.*;
 
 public class TrailerSettings {
-    public static List<TrailerSettings> register = new ArrayList<>();
+    public static final List<TrailerSettings> register = new ArrayList<>();
 
     private final HashMap<int[], Integer> models = new HashMap<>();
     private final String name;

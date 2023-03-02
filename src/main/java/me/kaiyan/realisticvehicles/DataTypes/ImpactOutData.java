@@ -1,7 +1,5 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
-import org.bukkit.entity.Player;
-
 public class ImpactOutData {
     private int destroyedIndex;
     private int playerDamage;

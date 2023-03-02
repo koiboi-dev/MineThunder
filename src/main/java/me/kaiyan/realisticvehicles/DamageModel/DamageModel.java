@@ -7,7 +7,6 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
-import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;
 import org.bukkit.entity.Player;
@@ -72,7 +71,7 @@ public class DamageModel implements Cloneable{
     public ImpactOutData shellImpact(Shell shell, Location centerloc, Location shellloc, float vehicleyaw, float turretyaw, float yaw, float pitch, World world, int override, boolean sendResult, Player player){
         return shellImpact(shell, centerloc.getX(), centerloc.getY(), centerloc.getZ(), shellloc.getX(), shellloc.getY(), shellloc.getZ(), vehicleyaw, turretyaw, yaw, pitch, world, override, sendResult, player);
     }
-    Random rand = new Random();
+    final Random rand = new Random();
     /**
      * Simulates a shell hitting the target @class DamageModel
      * @return Returns the ammo index of the target destroyed.
@@ -146,7 +145,6 @@ public class DamageModel implements Cloneable{
         boolean hitComponent = false;
         boolean destroyComponent = false;
         boolean heatFired = false;
-        Random rand = new Random();
         int finLoops = 0;
         //START
         for (int loops = 0; loops < maxLoops; loops++) {
@@ -467,7 +465,6 @@ public class DamageModel implements Cloneable{
     }
 
     public void showDamageParticles(World world, double bodyYaw, double turrYaw, Vector vPos){
-        Random rand = new Random();
         for (Component comp : components){
             if (comp.upper) {
                 comp.spawnDamageParticle(world, rand, turrYaw,vPos);
@@ -546,9 +543,9 @@ public class DamageModel implements Cloneable{
         }
 
         for (int i = 0; i < 20; i++) {
-            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 0, 1).rotateAroundY(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
-            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundX(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
-            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundZ(Math.toRadians(i*18))), 0, new Particle.DustOptions(Color.ORANGE, 1));
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 0, 1).rotateAroundY(Math.toRadians(i*18d))), 0, new Particle.DustOptions(Color.ORANGE, 1));
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundX(Math.toRadians(i*18d))), 0, new Particle.DustOptions(Color.ORANGE, 1));
+            world.spawnParticle(Particle.REDSTONE, loc.clone().add(new Vector(0, 1, 0).rotateAroundZ(Math.toRadians(i*18d))), 0, new Particle.DustOptions(Color.ORANGE, 1));
         }
     }
     
@@ -614,11 +611,10 @@ public class DamageModel implements Cloneable{
                 clone.components.add(comp.clone());
             }
             return clone;
-
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
-        return null;
+        return this;
     }
 
     public HashMap<ComponentType, List<Integer>> getCompMap() {
@@ -642,7 +638,7 @@ public class DamageModel implements Cloneable{
     }
 
     /**
-     * Checks if all of the components are active.
+     * Checks if all the components are active.
      * @param type Component type to check
      * @return If any components are inactive
      */
@@ -657,7 +653,7 @@ public class DamageModel implements Cloneable{
     }
 
     /**
-     * Returns a value between 0 and 1 of how much damage all the components have sustained (as a average)
+     * Returns a value between 0 and 1 of how much damage all the components have sustained (as an average)
      * @param type Component Type to check
      * @return 0 - 1 of percent health
      */

@@ -10,7 +10,7 @@ import org.bukkit.Particle;
 import java.util.Objects;
 
 public class FakeRadarTarget implements RadarTarget, FixedUpdate {
-    Location loc;
+    final Location loc;
 
     public FakeRadarTarget(Location loc) {
         this.loc = loc;
@@ -20,16 +20,6 @@ public class FakeRadarTarget implements RadarTarget, FixedUpdate {
     @Override
     public Location getLoc() {
         return loc;
-    }
-
-    @Override
-    public VehicleType getVehicleType() {
-        return VehicleType.AIR;
-    }
-
-    @Override
-    public VehicleInterface getVehicleInterface() {
-        return null;
     }
 
     @Override

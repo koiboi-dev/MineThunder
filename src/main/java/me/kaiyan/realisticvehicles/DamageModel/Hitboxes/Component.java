@@ -27,7 +27,27 @@ public class Component extends Rect implements Cloneable{
 
     public final boolean isAmmo;
 
-    public Component(ComponentType type, double penDefence, double health, double damageHealth, double criticalHealth, boolean destroys, double x, double y, double z, double xsize, double ysize, double zsize, boolean centered, boolean upper,Particle damageParticle, Particle critParticle, Particle destParticle, boolean isAmmo) {
+    /**
+     * Creates a new component object
+     * @param type Type of comp
+     * @param penDefence Difficulty for shells to pass through
+     * @param health Health
+     * @param damageHealth Bar where it plays damageParticle
+     * @param criticalHealth Bar where it plays criticalParticle
+     * @param destroys Destroys vehicle on break
+     * @param x x pos
+     * @param y y pos
+     * @param z z pos
+     * @param xsize x size
+     * @param ysize y size
+     * @param zsize z size
+     * @param centered apply size from corner or center
+     * @param upper in the upper part of the damage model (turret)
+     * @param damageParticle particle to play when damaged
+     * @param critParticle particle to play when critical
+     * @param destParticle particle to play when destroyed
+     */
+    public Component(ComponentType type, double penDefence, double health, double damageHealth, double criticalHealth, boolean destroys, double x, double y, double z, double xsize, double ysize, double zsize, boolean centered, boolean upper,Particle damageParticle, Particle critParticle, Particle destParticle) {
         super(x, y, z, xsize, ysize, zsize, centered);
         penDef = penDefence;
         this.health = health;
@@ -39,7 +59,7 @@ public class Component extends Rect implements Cloneable{
         this.crtParticle = critParticle;
         this.desParticle = destParticle;
         this.upper = upper;
-        this.isAmmo = isAmmo;
+        this.isAmmo = type == ComponentType.AMMOSTOWAGE;
         maxHealth = health;
     }
 

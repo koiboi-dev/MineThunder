@@ -2,13 +2,14 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles;
 
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.Menus.PurchaseMenu;
 import me.kaiyan.realisticvehicles.Models.Harvester.BlockHarvester;
 import org.bukkit.util.Vector;
 
 import java.util.*;
 
 public class CarSettings extends GroundVehicleSettings{
-    public static List<CarSettings> register = new ArrayList<>();
+    public static final List<CarSettings> register = new ArrayList<>();
     private final HashMap<int[], Integer> models = new HashMap<>();
     private final List<Vector> seats = new ArrayList<>();
 
@@ -16,8 +17,8 @@ public class CarSettings extends GroundVehicleSettings{
 
     private final float offset;
 
-    public CarSettings(String type, int textureID, float price, float offset) {
-        super(type, VehicleType.CAR,textureID, price);
+    public CarSettings(String type, int textureID, float price, float offset, String shopGroup) {
+        super(type, VehicleType.CAR,textureID, price, shopGroup);
         models.put(new int[] {0, 0}, textureID);
         this.offset = offset;
     }
@@ -43,6 +44,7 @@ public class CarSettings extends GroundVehicleSettings{
 
     public void register(){
         register.add(this);
+        PurchaseMenu.addVehicleToShopList(this);
     }
 
     public static List<CarSettings> getRegister() {

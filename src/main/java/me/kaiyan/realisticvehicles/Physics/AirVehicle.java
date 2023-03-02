@@ -193,7 +193,7 @@ public class AirVehicle{
 
     private float crashingHealth;
     boolean stalling = false;
-    Random rand = new Random();
+    final Random rand = new Random();
     public void update(boolean extendedGear){
         if (getSpeed() > 0) {
             addSpeed(-((getSpeed() * getSpeed()) * settings.getDragCoefficient()));
@@ -204,7 +204,7 @@ public class AirVehicle{
 
         //Crashing move system
         if (crashing){
-            addSpeed((pitch / 90) * 0.15);
+            addSpeed((pitch / 90) * 0.10);
 
             roll -= (rand.nextFloat()-0.5)*3;
 
@@ -219,10 +219,10 @@ public class AirVehicle{
             moveBy.rotateAroundX(Math.toRadians(pitch));
             moveBy.rotateAroundY(-Math.toRadians(yaw));
             moveBy.multiply(getSpeed());
-            float yFall = (float) (0.75f-((getSpeed()/settings.getLiftSpeed()*0.6)));
-            System.out.println(damageModel.getComponentDamagePercent(ComponentType.WING));
-            yFall /= damageModel.getComponentDamagePercent(ComponentType.WING);
-            yFall = Math.max(0, yFall);
+            float yFall = (float) (1f-((getSpeed()/settings.getLiftSpeed()*0.6)));
+            System.out.println(yFall);
+            yFall *= damageModel.getComponentDamagePercent(ComponentType.WING);
+            yFall = Math.max(-0.25f, yFall);
 
             moveBy.subtract(new Vector(0, yFall, 0));
 

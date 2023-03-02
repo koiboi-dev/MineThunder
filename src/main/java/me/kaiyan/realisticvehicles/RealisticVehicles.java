@@ -14,6 +14,7 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.Sleepable;
+import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.Models.MissileSlot;
@@ -26,6 +27,8 @@ import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSetti
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleLoaderJSON;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
 import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import me.kaiyan.realisticvehicles.VersionHandler.VersionHandler;
@@ -35,8 +38,8 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
@@ -48,7 +51,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.Vector;
 import org.ipvp.canvas.MenuFunctionListener;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -116,6 +118,7 @@ public class RealisticVehicles extends JavaPlugin {
                 Updates.triggerFixedUpdate();
             }
         }.runTaskTimer(this, 20, 2);
+        startFlasher();
 
         getLogger().info("Connecting to Vault...");
         setupEconomy();
@@ -124,7 +127,19 @@ public class RealisticVehicles extends JavaPlugin {
             new BukkitRunnable(){
                 @Override
                 public void run() {
-                    Updates.triggerFixedUpdate();
+                    wakeVehicles();
+                }
+
+                @Override
+                public synchronized void cancel() throws IllegalStateException {
+                    super.cancel();
+                    for (FixedUpdate inter : Updates.fixedUpdates){
+                        if (inter instanceof Sleepable sleep){
+                            sleep.sleep();
+                        } else {
+                            inter.closeThis(1);
+                        }
+                    }
                 }
             }.runTaskTimer(this, 20,getConfig().getInt("auto-wakeup-time"));
         }
@@ -136,16 +151,15 @@ public class RealisticVehicles extends JavaPlugin {
         //server.k().a;
     }
 
-    private boolean setupEconomy() {
+    private void setupEconomy() {
         if (getServer().getPluginManager().getPlugin("Vault") == null) {
-            return false;
+            return;
         }
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
         if (rsp == null) {
-            return false;
+            return;
         }
         econ = rsp.getProvider();
-        return true;
     }
 
     public static Economy getEconomy() {
@@ -164,77 +178,76 @@ public class RealisticVehicles extends JavaPlugin {
         }
     }
 
-    public void setupVehicles(){
+    public void setupVehicles() {
         //region Tanks
         //region Challenger II
-        TankSettings tankSettings = new TankSettings("Challenger II", 500, 500);
+        TankSettings tankSettings = new TankSettings("Challenger II", 500, 500, "Tanks");
         tankSettings.setVehicleData(0.15, 0.1, 3f, 0.01, 0.75, 0.075, 0.1, 2, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
         tankSettings.setTankData(5, 1, -10, 15, 0.06f, 0.6f);
         tankSettings.setSize(1, 3);
 
-        DamageModel damageModel = new DamageModel(new Rect(0, 0.75, 0.5,8, 2, 9, true), new Rect(0, 2.75, 0.5,8, 2, 9, true), 5);
+        DamageModel tankDamageModel = new DamageModel(new Rect(0, 0.75, 0.5, 8, 1.5, 9, true), new Rect(0, 2.75, 0.5, 8, 2, 9, true), 5);
 
         //Front Plating
-        damageModel.addArmour(new ArmourPlate(0.75, 0, 1, 3, 1, 1, 1.5, true, 0.8, false));
-        damageModel.addArmour(new ArmourPlate(1.25, 0, 1, 2, 3, 1, 1, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(0.75, 0, 1, 3, 1, 1, 1.5, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(1.25, 0, 1, 2, 3, 1, 1, true, 0.8, false));
         //Side Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
-        damageModel.addArmour(new ArmourPlate(0.25, -1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(0.25, 1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(0.25, -1.3, 0.5, 0, 0.5, 1, 4, true, 0.8, false));
         //Rear Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 0, 1, -2, 3, 1, 0.5, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(0.25, 0, 1, -2, 3, 1, 0.5, true, 0.8, false));
         //Rear Roof Plating
-        damageModel.addArmour(new ArmourPlate(0.25, 0, 1.55, -1.25, 3, 0.25, 1, true, 0.8, false));
+        tankDamageModel.addArmour(new ArmourPlate(0.25, 0, 1.55, -1.25, 3, 0.25, 1, true, 0.8, false));
 
         //Turret Plating
         //Side plating
-        damageModel.addArmour(new ArmourPlate(0.1,1,2,-0.5,0.5,0.8,3,true, 0.8, true));
-        damageModel.addArmour(new ArmourPlate(0.1,-1,2,-0.5,0.5,0.8,3,true, 0.8, true));
+        tankDamageModel.addArmour(new ArmourPlate(0.1, 1, 2, -0.5, 0.5, 0.8, 3, true, 0.8, true));
+        tankDamageModel.addArmour(new ArmourPlate(0.1, -1, 2, -0.5, 0.5, 0.8, 3, true, 0.8, true));
         //Front Plating
-        damageModel.addArmour(new ArmourPlate(2,0,2,1,2,1,1,true, 0.8, true));
+        tankDamageModel.addArmour(new ArmourPlate(2, 0, 2, 1, 2, 1, 1, true, 0.8, true));
         //Rear Plating
-        damageModel.addArmour(new ArmourPlate(0.5,0,2,-1.5,2,1,0.5,true, 0.8, true));
+        tankDamageModel.addArmour(new ArmourPlate(0.5, 0, 2, -1.5, 2, 1, 0.5, true, 0.8, true));
         //Roof Plating
-        damageModel.addArmour(new ArmourPlate(0.5,0,2.75,-0.5,2,0.5,3,true, 0.8, true));
+        tankDamageModel.addArmour(new ArmourPlate(0.5, 0, 2.75, -0.5, 2, 0.5, 3, true, 0.8, true));
         //Components
         //Engine
-        damageModel.addComponent(new Component(ComponentType.ENGINE, 5, 1,0.7,0.25,false, 0, 1, -1.5, 2, 1, 1, true,false, Particle.SMOKE_NORMAL, Particle.CAMPFIRE_COSY_SMOKE, Particle.LAVA, false));
-        damageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5,0.4,0.2,true, -0.75, 2, -0.75, 0.4, 0.5, 0.5, true,true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA, true));
-        damageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5,0.4,0.2,true, 0.75, 2, -0.75, 0.4, 0.5, 0.5, true,true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA, true));
-        damageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5,0.4,0.2,true, 0.5, 0.75, 1.25, 0.75, 0.75, 0.75, true,true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA, true));
-        damageModel.addComponent(new Component(ComponentType.GUNBARREL, 4, 3,2,1,false, 0, 2, 2.5, 0.5, 0.5, 2.5, true,true, Particle.ASH, Particle.CRIT, Particle.SMOKE_NORMAL, false));
-        damageModel.addComponent(new Component(ComponentType.TURRETRING, 2, 2,0.4,0.3,false, 0, 1.5, 0, 1.5, 0.25, 1.5, true,true, Particle.ASH, Particle.CRIT, Particle.CRIT_MAGIC, false));
-        damageModel.addComponent(new Component(ComponentType.GUNLOADER, 3, 0.5,0.4,0.3,false, 0,2, 0.5, 0.6, 0.5, 0.6, true,true, Particle.ASH, Particle.CRIT, Particle.CRIT_MAGIC, false));
-        damageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2,1.8,1.5,true, 0.5,1, -0.5, 0.5, 0.5, 0.75, true,false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA, false));
-        damageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2,1.8,1.5,true, -0.5,1, -0.5, 0.5, 0.5, 0.75, true,false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA, false));
-        damageModel.addComponent(new Component(ComponentType.PLAYER, 0, 20,1.8,1.5,true, 0.1,1, -0.3, 0.75, 1.25, 0.75, true,true, Particle.ASH, Particle.ASH, Particle.ASH, false));
+        tankDamageModel.addComponent(new Component(ComponentType.ENGINE, 5, 1, 0.7, 0.25, false, 0, 1, -1.5, 2, 1, 1, true, false, Particle.SMOKE_NORMAL, Particle.CAMPFIRE_COSY_SMOKE, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5, 0.4, 0.2, true, -0.75, 2, -0.75, 0.4, 0.5, 0.5, true, true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5, 0.4, 0.2, true, 0.75, 2, -0.75, 0.4, 0.5, 0.5, true, true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.AMMOSTOWAGE, 0.25, 1.5, 0.4, 0.2, true, 0.5, 0.75, 1.25, 0.75, 0.75, 0.75, true, true, Particle.CAMPFIRE_COSY_SMOKE, Particle.CRIT, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.GUNBARREL, 4, 3, 2, 1, false, 0, 2, 2.5, 0.5, 0.5, 2.5, true, true, Particle.ASH, Particle.CRIT, Particle.SMOKE_NORMAL));
+        tankDamageModel.addComponent(new Component(ComponentType.TURRETRING, 2, 2, 0.4, 0.3, false, 0, 1.5, 0, 1.5, 0.25, 1.5, true, true, Particle.ASH, Particle.CRIT, Particle.CRIT_MAGIC));
+        tankDamageModel.addComponent(new Component(ComponentType.GUNLOADER, 3, 0.5, 0.4, 0.3, false, 0, 2, 0.5, 0.6, 0.5, 0.6, true, true, Particle.ASH, Particle.CRIT, Particle.CRIT_MAGIC));
+        tankDamageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2, 1.8, 1.5, true, 0.5, 1, -0.5, 0.5, 0.5, 0.75, true, false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.FUEL, 0.5, 2, 1.8, 1.5, true, -0.5, 1, -0.5, 0.5, 0.5, 0.75, true, false, Particle.DRIP_LAVA, Particle.FLAME, Particle.LAVA));
+        tankDamageModel.addComponent(new Component(ComponentType.PLAYER, 0, 20, 1.8, 1.5, true, 0.1, 1, -0.3, 0.75, 1.25, 0.75, true, true, Particle.ASH, Particle.ASH, Particle.ASH));
 
-        damageModel.finish();
+        tankDamageModel.finish();
 
-        tankSettings.setDamageModel(damageModel);
-        tankSettings.setPositions(new Vector(-0.85, -0.5, -0.2),new Vector(-0.85, 0.4, -0.2), new Vector(0, 1.5, 3.5), new Vector(0.5, 1.5, 2));
-        Shell apShell = new Shell(5, 1.5, true, false, false,false, Material.GLASS, Collections.singletonList("&eArmour Piercing Sabot Round"),4, true, 3f, 100, 0.05, 1);
-        Shell heshShell = new Shell(3, 6, false, false, true,false, Material.TNT, List.of("&eHigh Explosive Squash Head", "Low penetration but extremely damaging to armour"),2, false, 6f, 400, 0.4, 1);
+        tankSettings.setDamageModel(tankDamageModel);
+        tankSettings.setPositions(new Vector(-0.85, -0.5, -0.2), new Vector(-0.85, 0.4, -0.2), new Vector(0, 1.5, 3.5), new Vector(0.5, 1.5, 2));
+        Shell apShell = new Shell(5, 1.5, true, false, false, false, Material.GLASS, Collections.singletonList("&eArmour Piercing Sabot Round"), 4, true, 3f, 100, 0.05, 1);
+        Shell heshShell = new Shell(3, 6, false, false, true, false, Material.TNT, List.of("&eHigh Explosive Squash Head", "Low penetration but extremely damaging to armour"), 2, false, 6f, 400, 0.4, 1);
         Shell heatShell = new Shell(5, 0.25, false, false, false, true, Material.HOPPER, Collections.singletonList("&eHigh Explosive Anti-Tank"), 5, true, 3.5f, 500, 0, 1);
         tankSettings.setShellData(apShell, heshShell, heatShell);
         tankSettings.setFuelData(100, 0.05f, 0, 2000, 0.05f);
 
         tankSettings.register();
         //endregion
-
         //region Leopard 2A7
-        TankSettings leopardSettings = new TankSettings("Leopard 2A7", 504, 500);
+        TankSettings leopardSettings = new TankSettings("Leopard 2A7", 504, 500, "Tanks");
         leopardSettings.setVehicleData(0.075, 0.1, 4f, 0.03, 1, 0.04, 0.075, 0.4, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
         leopardSettings.setTankData(7, 3, -5, 15, 0.12f, 0.6f);
         leopardSettings.setSize(2, 4);
 
-        leopardSettings.setPositions(new Vector(-0.85, -0.5, -0.2),new Vector(-0.85, 0.4, -0.2), new Vector(0, 1.5, 3.5), new Vector(0.5, 1.5, 2));
+        leopardSettings.setPositions(new Vector(-0.85, -0.5, -0.2), new Vector(-0.85, 0.4, -0.2), new Vector(0, 1.5, 3.5), new Vector(0.5, 1.5, 2));
         //Shell apShell = new Shell(5, 1.5, true, false, false,false, Material.GLASS, Collections.singletonList("&eArmour Piercing Sabot Round"),4, true, 3f, 100, 0.05, 1);
         //Shell heshShell = new Shell(3, 6, false, false, true,false, Material.TNT, List.of("&eHigh Explosive Squash Head", "Low penetration but extremely damaging to armour"),2, false, 6f, 400, 0.4, 1);
         //Shell heatShell = new Shell(5, 0.25, false, false, false, true, Material.HOPPER, Collections.singletonList("&eHigh Explosive Anti-Tank"), 5, true, 3.5f, 500, 0, 1);
         leopardSettings.setShellData(apShell, heshShell, heatShell);
         leopardSettings.setFuelData(100, 0.05f, 0, 2000, 0.05f);
 
-        leopardSettings.register();
+        //leopardSettings.register();
         //endregion
         //endregion
 
@@ -242,73 +255,73 @@ public class RealisticVehicles extends JavaPlugin {
         //region MIG 31
         DamageModel migModel = new DamageModel(new Rect(0, 0, 0, 10, 10, 10, true), null, 6);
 
-        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA, false));
-        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA, false));
-        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY, false));
-        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY, false));
-        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, 1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, -1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, 1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, -1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, 1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, -1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        migModel.addComponent(new Component(ComponentType.ENGINE, 0.25, 3, 2, 1, false, 0, 1.25, -1.25, 0.75, 1.25, 1.25, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY, false));
-        migModel.addComponent(new Component(ComponentType.LANDINGGEAR, 0.25, 3, 2, 1, false, 0, 0.5, 1, 0.5, 1, 0.5, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY, false));
+        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA));
+        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA));
+        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY));
+        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY));
+        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, 1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, -1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, 1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, -1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, 1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, -1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        migModel.addComponent(new Component(ComponentType.ENGINE, 0.25, 3, 2, 1, false, 0, 1.25, -1.25, 0.75, 1.25, 1.25, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY));
+        migModel.addComponent(new Component(ComponentType.LANDINGGEAR, 0.25, 3, 2, 1, false, 0, 0.5, 1, 0.5, 1, 0.5, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY));
 
         migModel.finish();
 
-        AirVehicleSettings planeSettings = new AirVehicleSettings("MIG 31", 601, 500, 1.5f, false);
-        planeSettings.setSeatPos(new Vector(0, 0, 0));
-        planeSettings.setControlData(1.5, 2, 3, 1.5, 1.75);
-        planeSettings.setFlightData(6,4, 0.01, 0.00075, 1, 2.75);
-        planeSettings.setSize(1, 3);
-        planeSettings.setDamageModel(migModel);
-        planeSettings.setFireRate(0);
-        planeSettings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
-        planeSettings.addGunPosition(new Vector(0.5,-0.1,0.25));
-        planeSettings.setFuelData(20, 0.1f, 0, 150, 0.05f);
+        AirVehicleSettings migSettings = new AirVehicleSettings("MIG 31", 601, 500, 1.5f, false, "Planes");
+        migSettings.setSeatPos(new Vector(0, 0, 0));
+        migSettings.setControlData(1.5, 2, 3, 1.5, 1.75);
+        migSettings.setFlightData(6, 4, 0.025, 0.002, 1, 2.75);
+        migSettings.setSize(1, 3);
+        migSettings.setDamageModel(migModel);
+        migSettings.setFireRate(0);
+        migSettings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
+        migSettings.addGunPosition(new Vector(0.5, -0.1, 0.25));
+        migSettings.setFuelData(20, 0.1f, 0, 150, 0.05f);
 
-        planeSettings.addModelSegment(new int[]{0, 0}, 601, 602);
+        migSettings.addModelSegment(new int[]{0, 0}, 601, 602);
 
-        planeSettings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
-        planeSettings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
-        planeSettings.addMissile(new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000));
-        planeSettings.setRadar(60, 1000);
+        migSettings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
+        migSettings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
+        migSettings.addMissile(new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000));
+        migSettings.setRadar(60, 1000);
 
-        planeSettings.register();
+        migSettings.register();
         //endregion
         //region F-15
         DamageModel f15Model = new DamageModel(new Rect(0, 0, 0, 15, 15, 15, true), null, 10);
 
-        f15Model.addComponent(new Component(ComponentType.ENGINE, 1, 2, 1, 1, false, -0.85, 0.88, 2.12, 1.75, 0.87, 2.62, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.FUEL, 1, 1, 1, 1, false, -3.06, 1.42, 1.14, 2.04, 0.09, 1.57, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, -4.52, 1.38, 1.14, 3.5, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.ELEVATOR, 1, 1, 1, 1, false, -2.92, 1.38, 3.91, 1.9, 0.16, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.ELEVATOR, 1, 1, 1, 1, false, 0.87, 1.38, 3.91, 1.9, 0.16, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.RUDDER, 1, 1, 1, 1, false, -1.02, 1.68, 3.32, 0.15, 2.2, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.RUDDER, 1, 1, 1, 1, false, 0.84, 1.68, 3.32, 0.15, 2.2, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, 1.02, 1.38, 1.14, 3.5, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, 1.02, 1.38, -1.05, 1.02, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, -2.04, 1.38, -1.05, 1.02, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, -1.31, 0.07, 0.99, 1.02, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, 0.29, 0.07, 0.99, 1.02, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, -0.44, -0.07, -4.55, 0.87, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.AILERON, 1, 1, 1, 1, false, -3.5, 1.31, 2.89, 2.48, 0.31, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.AILERON, 1, 1, 1, 1, false, 1.02, 1.31, 2.89, 2.48, 0.31, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.FUEL, 1, 1, 1, 1, false, 1.28, 1.42, 1.14, 2.04, 0.09, 1.57, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
-        f15Model.addComponent(new Component(ComponentType.PLAYER, 1, 1, 1, 1, false, -0.33, 0.84, -4.4, 0.58, 1.11, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD, false));
+        f15Model.addComponent(new Component(ComponentType.ENGINE, 1, 2, 1, 1, false, -0.85, 0.88, 2.12, 1.75, 0.87, 2.62, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.FUEL, 1, 1, 1, 1, false, -3.06, 1.42, 1.14, 2.04, 0.09, 1.57, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, -4.52, 1.38, 1.14, 3.5, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.ELEVATOR, 1, 1, 1, 1, false, -2.92, 1.38, 3.91, 1.9, 0.16, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.ELEVATOR, 1, 1, 1, 1, false, 0.87, 1.38, 3.91, 1.9, 0.16, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.RUDDER, 1, 1, 1, 1, false, -1.02, 1.68, 3.32, 0.15, 2.2, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.RUDDER, 1, 1, 1, 1, false, 0.84, 1.68, 3.32, 0.15, 2.2, 1.86, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, 1.02, 1.38, 1.14, 3.5, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, 1.02, 1.38, -1.05, 1.02, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.WING, 1, 1, 1, 1, false, -2.04, 1.38, -1.05, 1.02, 0.16, 2.15, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, -1.31, 0.07, 0.99, 1.02, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, 0.29, 0.07, 0.99, 1.02, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.LANDINGGEAR, 1, 1, 1, 1, false, -0.44, -0.07, -4.55, 0.87, 0.74, 0.55, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.AILERON, 1, 1, 1, 1, false, -3.5, 1.31, 2.89, 2.48, 0.31, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.AILERON, 1, 1, 1, 1, false, 1.02, 1.31, 2.89, 2.48, 0.31, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.FUEL, 1, 1, 1, 1, false, 1.28, 1.42, 1.14, 2.04, 0.09, 1.57, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
+        f15Model.addComponent(new Component(ComponentType.PLAYER, 1, 1, 1, 1, false, -0.33, 0.84, -4.4, 0.58, 1.11, 0.69, false, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
 
         f15Model.finish();
 
-        AirVehicleSettings f15Settings = new AirVehicleSettings("F-15", 603, 500, 3, true);
-        f15Settings.setSeatPos(new Vector(0, 0.4, -2.8));
+        AirVehicleSettings f15Settings = new AirVehicleSettings("F-15", 603, 500, 3, true, "Planes");
+        f15Settings.setSeatPos(new Vector(0, 0.4, -0.8));
         f15Settings.setControlData(2.5, 2, 4.5, 2, 2.5);
-        f15Settings.setFlightData(4, 4,0.015, 0.0008, 1.8, 2.25);
+        f15Settings.setFlightData(4, 4, 0.03, 0.0025, 1.5, 2);
         f15Settings.setSize(1, 3);
         f15Settings.setDamageModel(f15Model);
         f15Settings.setFireRate(0);
         f15Settings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
-        f15Settings.addGunPosition(new Vector(0.5,-0.1,0.25));
+        f15Settings.addGunPosition(new Vector(0.5, -0.1, 0.25));
         f15Settings.setFuelData(50, 0.2f, 0, 300, 0.3f);
 
         f15Settings.addModelSegment(new int[]{0, 0}, 604, 603);
@@ -326,10 +339,10 @@ public class RealisticVehicles extends JavaPlugin {
 
         //region Civilian
         //region S3-X Truck
-        CarSettings trucksettings = new CarSettings("Bessie Trucking S3-X Truck", 800, 400, 3);
+        CarSettings trucksettings = new CarSettings("Bessie Trucking S3-X Truck", 800, 400, 3, "Tanks");
         trucksettings.setSeatPos(new Vector(0.8, 1.3, -0.45));
-        DamageModel truckModel = new DamageModel(new Rect(0, 0, 0,6, 6, 6, true), null, 5);
-        truckModel.addComponent(new Component(ComponentType.ENGINE, 5, 2, 1.5, 1, false, 0, 0.75, -0.2, 1.25, 0.75, 0.5, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA, false));
+        DamageModel truckModel = new DamageModel(new Rect(0, 0, 0, 6, 6, 6, true), null, 5);
+        truckModel.addComponent(new Component(ComponentType.ENGINE, 5, 2, 1.5, 1, false, 0, 0.75, -0.2, 1.25, 0.75, 0.5, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA));
         truckModel.finish();
         trucksettings.setDamageModel(truckModel);
         trucksettings.setVehicleData(0.025, 0.02, 1.5f, 0.015, 1.3, 0.005, 0.01, 0.2, GroundVehicle.SteerType.REGULAR, Traversable.SLAB);
@@ -342,33 +355,41 @@ public class RealisticVehicles extends JavaPlugin {
         //trucksettings.setHarvester(harvester);
         trucksettings.register();
         //endregion
-
         //region Model 2 Tractor
-        CarSettings tractorSettings = new CarSettings("Jerry Deer's Model 2 Tractor", 801, 800, -0.5f);
+        CarSettings tractorSettings = new CarSettings("Jerry Deer's Model 2 Tractor", 801, 800, -0.5f, "Tanks");
         tractorSettings.setSeatPos(new Vector(0, 1.5, -0.6));
-        DamageModel tractorModel = new DamageModel(new Rect(0, 0, 0,5, 5, 5, true), null, 4);
-        tractorModel.addComponent(new Component(ComponentType.ENGINE, 3, 2, 1.5, 1, false, 0, 1.25, 0.75, 0.75, 1, 1, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA, false));
+        DamageModel tractorModel = new DamageModel(new Rect(0, 0, 0, 5, 5, 5, true), null, 4);
+        tractorModel.addComponent(new Component(ComponentType.ENGINE, 3, 2, 1.5, 1, false, 0, 1.25, 0.75, 0.75, 1, 1, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA));
         tractorModel.finish();
         tractorSettings.setDamageModel(tractorModel);
-        tractorSettings.setVehicleData(0.1, 0.2, 2f, 0.05, 1, 0.05, 0.075, 0.5, GroundVehicle.SteerType.REGULAR,Traversable.BLOCK);
+        tractorSettings.setVehicleData(0.1, 0.2, 2f, 0.05, 1, 0.05, 0.075, 0.5, GroundVehicle.SteerType.REGULAR, Traversable.BLOCK);
         tractorSettings.setFuelData(50, 0.2f, 0, 300, 1);
         tractorSettings.setSize(1, 1.5f);
         tractorSettings.addTrailerHitches(new Vector(0, 0.25, -2.5), TrailerTypes.TRACTOR);
         tractorSettings.register();
         //endregion
-
         //region T5 Dry Trailer
-        TrailerSettings trailerSettings = new TrailerSettings("Bessie Trucking T5 Dry Trailer", 9f,216, TrailerTypes.TRUCK);
-        trailerSettings.addModelSegment(new int[] {0, 1}, 850);
-        trailerSettings.addModelSegment(new int[] {0, 0}, 851);
+        TrailerSettings trailerSettings = new TrailerSettings("Bessie Trucking T5 Dry Trailer", 9f, 216, TrailerTypes.TRUCK);
+        trailerSettings.addModelSegment(new int[]{0, 1}, 850);
+        trailerSettings.addModelSegment(new int[]{0, 0}, 851);
         trailerSettings.register();
         //endregion
         //endregion
+
+        //Load custom vehicles
+        VehicleLoaderJSON.loadVehicles();
     }
 
     @Override
     public void onDisable() {
         for (FixedUpdate inter : Updates.fixedUpdates){
+            if (inter instanceof VehicleInterface vinter){
+                if (vinter instanceof Aircraft craft){
+                    craft.getSeatedPlayer().getInventory().setContents(craft.getPlayerInv());
+                } else if (vinter instanceof Tank tank){
+                    tank.getSeatedPlayer().getInventory().setContents(tank.getPlayerInv());
+                }
+            }
             if (inter instanceof Sleepable sleep){
                 sleep.sleep();
             } else {
@@ -566,7 +587,7 @@ public class RealisticVehicles extends JavaPlugin {
                     }
                     // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
                     //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt       ; yaw
-                    String[] sinfo = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");;
+                    String[] sinfo = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
                     Trailer trailer = new Trailer(loc, TrailerSettings.getTrailerSettings(sinfo[2]));
 
                     trailer.setYaw(Float.parseFloat(sinfo[7]));

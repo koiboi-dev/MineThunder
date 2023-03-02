@@ -17,15 +17,15 @@ public class HelicopterSettings extends VehicleSettings {
 
     private float yawSpeed;
 
-    private List<Vector> gunPositions = new ArrayList<>();
+    private final List<Vector> gunPositions = new ArrayList<>();
     private float fireRate;
 
     private final HashMap<int[], Tuple<Integer, Integer>> models = new HashMap<>();
     private final float midOffset;
     private final boolean shiftGrid;
 
-    public HelicopterSettings(String type, int textureID, VehicleType vtype, float price, float midOffset, boolean shiftGrid) {
-        super(type, textureID, vtype, price);
+    public HelicopterSettings(String type, int textureID, VehicleType vtype, float price, float midOffset, boolean shiftGrid, String shopGroup) {
+        super(type, textureID, vtype, price, shopGroup);
         this.midOffset = midOffset;
         this.shiftGrid = shiftGrid;
     }

@@ -3,7 +3,6 @@ package me.kaiyan.realisticvehicles.Models.Harvester;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.*;
 import org.bukkit.block.Block;
-import org.bukkit.entity.Item;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
@@ -180,6 +179,6 @@ public class BlockHarvester implements Cloneable{
         } catch (CloneNotSupportedException e) {
             e.printStackTrace();
         }
-        return null;
+        return this;
     }
 }

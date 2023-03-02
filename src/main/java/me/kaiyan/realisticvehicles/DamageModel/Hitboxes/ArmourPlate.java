@@ -9,14 +9,28 @@ import org.bukkit.util.Vector;
 import java.util.Random;
 
 public class ArmourPlate extends Rect implements Cloneable {
-    public double penDef;
+    public final double penDef;
     public double weakness = 0;
-    public double weaknessMult;
-    public boolean upper;
+    public final double weaknessMult;
+    public final boolean upper;
 
+    /**
+     *
+     * @param penDefence
+     * @param x
+     * @param y
+     * @param z
+     * @param xsize
+     * @param ysize
+     * @param zsize
+     * @param centered
+     * @param weaknessMult ahmad%
+     * @param upper
+     */
     public ArmourPlate(double penDefence,double x, double y, double z, double xsize, double ysize, double zsize, boolean centered, double weaknessMult, boolean upper) {
         super(x, y, z, xsize, ysize, zsize, centered);
         penDef = penDefence;
+        // game cum bro
         this.weaknessMult = weaknessMult;
         this.upper = upper;
     }

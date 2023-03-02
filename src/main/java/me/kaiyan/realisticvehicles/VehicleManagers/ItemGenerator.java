@@ -79,7 +79,7 @@ public class ItemGenerator {
     }
 
     /**
-     * Creates a item from vehicle, checks if its valid.
+     * Creates an item from vehicle, checks if it's valid.
      * @param item item to check
      * @param loc location to place craft
      */

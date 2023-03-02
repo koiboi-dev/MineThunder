@@ -1,25 +1,17 @@
 package me.kaiyan.realisticvehicles.Menus;
 
 import me.kaiyan.realisticvehicles.Vehicles.Trailer;
-import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.ipvp.canvas.Menu;
 import org.ipvp.canvas.mask.BinaryMask;
 import org.ipvp.canvas.mask.Mask;
-import org.ipvp.canvas.paginate.PaginatedMenuBuilder;
-import org.ipvp.canvas.slot.ClickOptions;
 import org.ipvp.canvas.slot.Slot;
-import org.ipvp.canvas.slot.SlotSettings;
 import org.ipvp.canvas.type.ChestMenu;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class TrailerMenu{

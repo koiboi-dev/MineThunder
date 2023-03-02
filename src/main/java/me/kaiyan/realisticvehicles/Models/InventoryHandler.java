@@ -1,23 +1,11 @@
 package me.kaiyan.realisticvehicles.Models;
 
 import me.kaiyan.realisticvehicles.RealisticVehicles;
-import org.bukkit.Bukkit;
-import org.bukkit.configuration.ConfigurationOptions;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
-import org.bukkit.util.io.BukkitObjectInputStream;
-import org.bukkit.util.io.BukkitObjectOutputStream;
-import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
-import java.util.UUID;
 
 public class InventoryHandler {
     public static File invFile;
@@ -27,7 +15,7 @@ public class InventoryHandler {
         invFile = new File(RealisticVehicles.getInstance().getDataFolder()+"/inventories.yml");
         if (!invFile.exists()){
             try {
-                invFile.createNewFile();
+                boolean none = invFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }

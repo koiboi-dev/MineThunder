@@ -13,12 +13,12 @@ import org.bukkit.entity.Player;
 import java.util.*;
 
 public class Updates {
-    public static List<FixedUpdate> fixedUpdates = new ArrayList<>();
+    public static final List<FixedUpdate> fixedUpdates = new ArrayList<>();
 
     public static void addListener(FixedUpdate update){
         fixedUpdates.add(update);
     }
-    public static HashMap<Player, DeathMessage> expectedDeaths = new HashMap<>();
+    public static final HashMap<Player, DeathMessage> expectedDeaths = new HashMap<>();
     public static List<FixedUpdate> toBeRemoved = new ArrayList<>();
     public static List<FixedUpdate> toBeAdded = new ArrayList<>();
 
@@ -82,7 +82,6 @@ public class Updates {
                 continue;
             }
             for (ProjectileShell shell : boundingShells){
-                shell.stand.remove();
                 System.out.println("Hit");
                 ImpactOutData data = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.getYaw(), shell.getPitch(), shell.loc.getWorld(), 0, true, shell.player);
                 shell.closeThis(1);

@@ -7,6 +7,10 @@ public class DeathMessage {
     public DeathMessage(String message) {
         this.message = message;
     }
+    public DeathMessage(String message, int aliveTime) {
+        this.message = message;
+        this.aliveTime = aliveTime;
+    }
 
     public String getMessage() {
         return message;

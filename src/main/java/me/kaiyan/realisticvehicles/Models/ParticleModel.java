@@ -64,7 +64,7 @@ public enum ParticleModel {
         }
     });
 
-    ParticleEffect effect;
+    final ParticleEffect effect;
     ParticleModel(ParticleEffect effect){
         this.effect = effect;
     }

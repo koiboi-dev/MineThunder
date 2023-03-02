@@ -1,7 +1,5 @@
 package me.kaiyan.realisticvehicles.DataTypes.Enums;
 
-import org.bukkit.Particle;
-
 public enum ComponentType {
     ENGINE,
     GUNLOADER,

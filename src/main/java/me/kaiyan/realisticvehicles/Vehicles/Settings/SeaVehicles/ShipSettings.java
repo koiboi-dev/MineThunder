@@ -12,8 +12,8 @@ public class ShipSettings extends VehicleSettings {
     private float length;
     private float width;
 
-    public ShipSettings(String type, int textureID, VehicleType vtype, float price) {
-        super(type, textureID, vtype, price);
+    public ShipSettings(String type, int textureID, VehicleType vtype, float price, String shopGroup) {
+        super(type, textureID, vtype, price, shopGroup);
     }
 
     public float getAcceleration() {

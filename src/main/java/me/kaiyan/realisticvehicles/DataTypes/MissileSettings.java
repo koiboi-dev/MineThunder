@@ -3,10 +3,6 @@ package me.kaiyan.realisticvehicles.DataTypes;
 import com.google.gson.Gson;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
 public class MissileSettings {
     private final float power;
     private final float speed;

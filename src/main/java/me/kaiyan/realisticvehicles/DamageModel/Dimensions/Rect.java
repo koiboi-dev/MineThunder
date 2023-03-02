@@ -3,13 +3,13 @@ package me.kaiyan.realisticvehicles.DamageModel.Dimensions;
 import java.util.Random;
 
 public class Rect {
-    public double x;
-    public double y;
-    public double z;
+    public final double x;
+    public final double y;
+    public final double z;
 
-    public double xsize;
-    public double ysize;
-    public double zsize;
+    public final double xsize;
+    public final double ysize;
+    public final double zsize;
 
     public Rect(double x, double y, double z, double xsize, double ysize, double zsize, boolean centered){
         if (!centered) {

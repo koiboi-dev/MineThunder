@@ -7,19 +7,18 @@ import me.kaiyan.realisticvehicles.VersionHandler.VersionHandler;
 import org.bukkit.*;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
-import org.bukkit.entity.Fireball;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.SmallFireball;
 import org.bukkit.util.Vector;
 
 import java.util.List;
 import java.util.Objects;
 
 public class ProjectileShell extends Shell implements FixedUpdate {
-    public Location loc;
+    public final Location loc;
     public Location prevLoc;
-    public Vector moveBy;
-    public Player player;
-    public ArmorStand stand;
+    public final Vector moveBy;
+    public final Player player;
 
     public static final float gravity = 0.05f;
 
@@ -50,19 +49,17 @@ public class ProjectileShell extends Shell implements FixedUpdate {
         moveBy = new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(-Math.toRadians(yaw)).multiply(power);
         this.tracer = tracer;
         this.player = player;
-        stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
 
         start();
     }
 
-    public ProjectileShell(Location loc, float yaw, float pitch, Player player, Shell shell) {
-        super(shell.penScore, shell.shellDamage, shell.capped, shell.sabot, shell.explosive, shell.heat, shell.item.getType(), shell.shellLore, shell.power, shell.tracer, shell.reloadTime, shell.cost, shell.weaknessDamage,shell.buyAmount);
+    public ProjectileShell(Location loc, float yaw, float pitch, Player player, Shell shell, float speed) {
+        super(shell.penScore, shell.shellDamage, shell.capped, shell.sabot, shell.explosive, shell.heat, shell.item.getType(), shell.shellLore, shell.power+speed, shell.tracer, shell.reloadTime, shell.cost, shell.weaknessDamage,shell.buyAmount);
         long startTime = System.currentTimeMillis();
         System.out.println("Creating Shell...");
         this.loc = loc;
         moveBy = new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(-Math.toRadians(yaw)).multiply(power);
         this.player = player;
-        stand = (ArmorStand) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND);
 
         start();
         System.out.println("Created Shell! " + (System.currentTimeMillis() - startTime));
@@ -80,7 +77,6 @@ public class ProjectileShell extends Shell implements FixedUpdate {
         loc.add(moveBy);
         moveBy.subtract(new Vector(0, gravity, 0));
 
-        VersionHandler.teleport(stand, loc.toVector(), getYaw(), getPitch());
 
         if (tracer) {
             RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.RED, 6));
@@ -90,7 +86,6 @@ public class ProjectileShell extends Shell implements FixedUpdate {
 
         if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()) {
             loc.getWorld().createExplosion(loc, 2, false, false);
-            stand.remove();
             closeThis(0);
         }
         /*if(!loc.getChunk().isLoaded()) {

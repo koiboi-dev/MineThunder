@@ -6,7 +6,6 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Menus.TrailerMenu;
 import me.kaiyan.realisticvehicles.Menus.VehicleMenu;
-import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.*;
@@ -31,7 +30,6 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-import java.io.IOException;
 import java.util.*;
 
 public class EventListener implements Listener {
