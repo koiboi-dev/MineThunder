@@ -91,7 +91,7 @@ public class BlockHarvester implements Cloneable{
                             block.setType(Material.AIR);
                             world.playSound(loc, block.getBlockData().getSoundGroup().getBreakSound(), 1, 1);
                             world.spawnParticle(Particle.BLOCK_CRACK, block.getBoundingBox().getCenter().toLocation(world), 30, 1, 1, 1, block.getBlockData());
-                            System.out.println("Broke Other");
+                            RealisticVehicles.debugLog("Broke Other");
                             break;
                         }
                         if (inv.getContents()[i].getType() == block.getType() && !(inv.getContents()[i].getAmount() + 1 > 64)) {
@@ -102,7 +102,7 @@ public class BlockHarvester implements Cloneable{
                             world.playSound(loc, block.getBlockData().getSoundGroup().getBreakSound(), 1, 1);
                             world.spawnParticle(Particle.BLOCK_CRACK, block.getBoundingBox().getCenter().toLocation(world), 30, 1, 1, 1, block.getBlockData());
                             found = true;
-                            System.out.println("Broke Inv");
+                            RealisticVehicles.debugLog("Broke Inv");
                             break;
                         }
                     }
@@ -116,7 +116,7 @@ public class BlockHarvester implements Cloneable{
                                 block.setType(Material.AIR);
                                 world.playSound(loc, block.getBlockData().getSoundGroup().getBreakSound(), 1, 1);
                                 world.spawnParticle(Particle.BLOCK_CRACK, block.getBoundingBox().getCenter().toLocation(world), 30, 1, 1, 1, block.getBlockData());
-                                System.out.println("Broke Other");
+                                RealisticVehicles.debugLog("Broke Other");
                                 break;
                             }
                             if (inv.getContents()[i].getType() == block.getType() && !(inv.getContents()[i].getAmount() + 1 > 64)) {
@@ -127,14 +127,14 @@ public class BlockHarvester implements Cloneable{
                                 world.playSound(loc, block.getBlockData().getSoundGroup().getBreakSound(), 1, 1);
                                 world.spawnParticle(Particle.BLOCK_CRACK, block.getBoundingBox().getCenter().toLocation(world), 30, 1, 1, 1, block.getBlockData());
                                 found = true;
-                                System.out.println("Broke Inv");
+                                RealisticVehicles.debugLog("Broke Inv");
                                 break;
                             }
                         }
                     }
                 }
                 if (!found){
-                    System.out.println("Dropping");
+                    RealisticVehicles.debugLog("Dropping");
                     world.dropItem(loc.clone().add(depositPoint.clone().rotateAroundY(Math.toRadians(yaw))), new ItemStack(block.getType(), 1));
                 }
             }

@@ -84,11 +84,11 @@ public class DamageModel implements Cloneable{
         ImpactOutData data = new ImpactOutData(-1, -1);
 
         double mx = vx-x;
-        //System.out.println(mx + " | "+x+" - "+vx);
+        //RealisticVehicles.debug(mx + " | "+x+" - "+vx);
         double my = vy-y;
-        //System.out.println(my + " | "+y+" - "+vy);
+        //RealisticVehicles.debug(my + " | "+y+" - "+vy);
         double mz = vz-z;
-        //System.out.println(mz + " | "+z+" - "+vz);
+        //RealisticVehicles.debug(mz + " | "+z+" - "+vz);
 
         boolean isUpperHalf = isInUpperHalf(new VectorD(mx, my, mz));
 
@@ -118,7 +118,7 @@ public class DamageModel implements Cloneable{
         Vector startPoint = new Vector(mx, my, mz);
         startPoint.rotateAroundY(vyaw);
 
-        //System.out.println("Prev : "+mx+","+my+","+mz);
+        //RealisticVehicles.debug("Prev : "+mx+","+my+","+mz);
 
         RealisticVehicles.debugLog(myaw + " |Ve "+vehicleyaw+" |Tu "+turretyaw + " | Org " + yaw);
         RealisticVehicles.debugLog(pitch);
@@ -342,11 +342,11 @@ public class DamageModel implements Cloneable{
         ImpactOutData data = new ImpactOutData(-1, -1);
 
         double mx = vx-x;
-        //System.out.println(mx + " | "+x+" - "+vx);
+        //RealisticVehicles.debug(mx + " | "+x+" - "+vx);
         double my = vy-y;
-        //System.out.println(my + " | "+y+" - "+vy);
+        //RealisticVehicles.debug(my + " | "+y+" - "+vy);
         double mz = vz-z;
-        //System.out.println(mz + " | "+z+" - "+vz);
+        //RealisticVehicles.debugLog(mz + " | "+z+" - "+vz);
 
         double damage = 0;
         for (ArmourPlate plate : armour){

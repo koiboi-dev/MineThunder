@@ -6,7 +6,7 @@
 
     <groupId>me.kaiyan.realisticvehicles</groupId>
     <artifactId>RealisticVehicles</artifactId>
-    <version>1.0.0</version>
+    <version>0.0.2</version>
 
     <properties>
         <maven.compiler.source>16</maven.compiler.source>
@@ -75,6 +75,12 @@
             <groupId>org.spigotmc..</groupId>
             <artifactId>spigot</artifactId>
             <version>1.19.2-R0.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.spigotmc...</groupId>
+            <artifactId>spigot</artifactId>
+            <version>1.19.3-R0.1-SNAPSHOT</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

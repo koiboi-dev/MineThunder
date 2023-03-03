@@ -272,7 +272,7 @@ public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface
         //turretEnt.teleport(baseEntity.getLocation());
         VersionHandler.teleport(turretEnt, getLoc().toVector(), turretYaw, 0);
         //gunEnt.teleport(baseEntity.getLocation());
-        //System.out.println(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(turretPitch)).rotateAroundY(Math.toRadians(-turretYaw+180)).multiply(gunRecoil));
+        //RealisticVehicles.debugLog(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(turretPitch)).rotateAroundY(Math.toRadians(-turretYaw+180)).multiply(gunRecoil));
         VersionHandler.teleport(gunEnt, getLoc().clone().add(new Vector(0, 0, 1).rotateAroundX(Math.toRadians(-turretPitch)).rotateAroundY(Math.toRadians(-turretYaw+180)).multiply(gunRecoil)).toVector(), turretYaw, turretPitch);
         gunRecoil -= gunRecoilCooldown;
         gunRecoil = Math.max(0, gunRecoil);

@@ -56,13 +56,13 @@ public class ProjectileShell extends Shell implements FixedUpdate {
     public ProjectileShell(Location loc, float yaw, float pitch, Player player, Shell shell, float speed) {
         super(shell.penScore, shell.shellDamage, shell.capped, shell.sabot, shell.explosive, shell.heat, shell.item.getType(), shell.shellLore, shell.power+speed, shell.tracer, shell.reloadTime, shell.cost, shell.weaknessDamage,shell.buyAmount);
         long startTime = System.currentTimeMillis();
-        System.out.println("Creating Shell...");
+        RealisticVehicles.debugLog("Creating Shell...");
         this.loc = loc;
         moveBy = new Vector(0, 0, 1).rotateAroundX(Math.toRadians(pitch)).rotateAroundY(-Math.toRadians(yaw)).multiply(power);
         this.player = player;
 
         start();
-        System.out.println("Created Shell! " + (System.currentTimeMillis() - startTime));
+        RealisticVehicles.debugLog("Created Shell! " + (System.currentTimeMillis() - startTime));
     }
 
     int loops = 0;

@@ -52,7 +52,7 @@ public class FuelTank {
             moneyEquiv = (float) (type.getFuelExchangeRate() * (fuel+amount));
         }
         fuel = (float) (moneyEquiv/type.getFuelExchangeRate());
-        //System.out.println("Set Fuel : " + moneyEquiv/type.getFuelExchangeRate() + " : " + moneyEquiv);
+        //RealisticVehicles.debugLog("Set Fuel : " + moneyEquiv/type.getFuelExchangeRate() + " : " + moneyEquiv);
         if (fuel > maxFuel){
             fuel = maxFuel;
             return (float) ((fuel-maxFuel)*type.getFuelExchangeRate());

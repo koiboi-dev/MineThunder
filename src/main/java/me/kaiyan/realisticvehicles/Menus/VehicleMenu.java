@@ -236,7 +236,7 @@ public class VehicleMenu {
             Slot slot = menu.getSlot(loops);
             slot.setItem(item);
             slot.setClickHandler(((gplayer, clickInformation) -> {
-                //System.out.println("Refueling...");
+                //RealisticVehicles.debugLog("Refueling...");
                 Economy econ = RealisticVehicles.getEconomy();
                 if (econ.getBalance(player) >= vtype.getFuelTank().getMaxFuel()/10*type.getFuelExchangeRate()) {
                     econ.withdrawPlayer(player, vtype.getFuelTank().getMaxFuel()/10*type.getFuelExchangeRate());

@@ -14,6 +14,9 @@ import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
 import me.kaiyan.realisticvehicles.Vehicles.Aircraft;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.ChatMessageType;
+import net.md_5.bungee.api.chat.ComponentBuilder;
 import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -31,80 +34,107 @@ public class TestCommands implements CommandExecutor {
 
     @Override
     public boolean onCommand(@Nonnull CommandSender commandSender, @Nonnull Command command, @Nonnull String s, String[] strings) {
-        switch (strings[0]) {
-            case "tank" -> {
-                try {
-                    new Tank(((Player) commandSender).getLocation(), "Challenger II");
-                } catch (InvalidTypeException e) {
-                    e.printStackTrace();
+        if (RealisticVehicles.debugMode) {
+            switch (strings[0]) {
+                case "tank" -> {
+                    try {
+                        new Tank(((Player) commandSender).getLocation(), "Challenger II");
+                    } catch (InvalidTypeException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            case "flash" -> RealisticVehicles.flashing = !RealisticVehicles.flashing;
-            case "plane" -> {
-                try {
-                    new Aircraft(((Player) commandSender).getLocation(), "MIG 31");
-                } catch (InvalidTypeException e) {
-                    e.printStackTrace();
+                case "flash" -> RealisticVehicles.flashing = !RealisticVehicles.flashing;
+                case "plane" -> {
+                    try {
+                        new Aircraft(((Player) commandSender).getLocation(), "MIG 31");
+                    } catch (InvalidTypeException e) {
+                        e.printStackTrace();
+                    }
                 }
-            }
-            case "fire" -> {
-                Player player = (Player)commandSender;
-                new ProjectileShell(player.getEyeLocation(), player.getLocation().getYaw(), player.getLocation().getPitch(), 5, true, 5, 2, false, false, false,false, player, Material.GLASS, Collections.singletonList(""), 0.5, 0, 0, 1);
-            }
-            case "faketarget" -> new FakeRadarTarget(((Player)commandSender).getLocation());
-            case "killall" -> {
-                List<FixedUpdate> updates = new ArrayList<>(Updates.fixedUpdates);
-                for (FixedUpdate update : updates){
-                    update.closeThis(2);
+                case "fire" -> {
+                    Player player = (Player) commandSender;
+                    new ProjectileShell(player.getEyeLocation(), player.getLocation().getYaw(), player.getLocation().getPitch(), 5, true, 5, 2, false, false, false, false, player, Material.GLASS, Collections.singletonList(""), 0.5, 0, 0, 1);
                 }
-            }
-            case "missile" -> {
-                Player player = (Player)commandSender;
-                new Missile(
-                        player.getLocation(),
-                        -player.getLocation().getYaw(),
-                        player.getLocation().getPitch(),
-                        new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000),
-                        (ArmorStand) player.getWorld().spawnEntity(player.getLocation(), EntityType.ARMOR_STAND),
-                        5,
-                        null,
-                        player
+                case "faketarget" -> new FakeRadarTarget(((Player) commandSender).getLocation());
+                case "killall" -> {
+                    List<FixedUpdate> updates = new ArrayList<>(Updates.fixedUpdates);
+                    for (FixedUpdate update : updates) {
+                        update.closeThis(2);
+                    }
+                }
+                case "missile" -> {
+                    Player player = (Player) commandSender;
+                    new Missile(
+                            player.getLocation(),
+                            -player.getLocation().getYaw(),
+                            player.getLocation().getPitch(),
+                            new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000),
+                            (ArmorStand) player.getWorld().spawnEntity(player.getLocation(), EntityType.ARMOR_STAND),
+                            5,
+                            null,
+                            player
 
-                );
+                    );
+                }
+                case "giveitem" -> {
+                    ItemStack item = new ItemStack(Material.CRAFTING_TABLE);
+                    ItemMeta meta = item.getItemMeta();
+                    meta.setCustomModelData(200);
+                    item.setItemMeta(meta);
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(item);
+                }
+                case "tanki" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Challenger II", VehicleType.TANK));
+                }
+                case "planei" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("MIG 31", VehicleType.AIR));
+                }
+                case "truck" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking S3-X Truck", VehicleType.CAR));
+                }
+                case "trailer" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking T5 Dry Trailer", VehicleType.TRAILER));
+                }
+                case "crowbar" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.getCrowbar());
+                }
+                case "shop" -> {
+                    Player player = (Player) commandSender;
+                    PurchaseMenu.openPurchaseMenu(player);
+                }
             }
-            case "giveitem" -> {
-                ItemStack item = new ItemStack(Material.CRAFTING_TABLE);
-                ItemMeta meta = item.getItemMeta();
-                meta.setCustomModelData(200);
-                item.setItemMeta(meta);
-                Player player = (Player)commandSender;
-                player.getInventory().addItem(item);
+        } else {
+            if (strings.length == 0){
+                sendHelpMsg((Player) commandSender);
             }
-            case "tanki" -> {
-                Player player = (Player)commandSender;
-                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Challenger II", VehicleType.TANK));
-            }
-            case "planei" -> {
-                Player player = (Player)commandSender;
-                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("MIG 31", VehicleType.AIR));
-            }
-            case "truck" -> {
-                Player player = (Player) commandSender;
-                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking S3-X Truck", VehicleType.CAR));
-            }
-            case "trailer" -> {
-                Player player = (Player) commandSender;
-                player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking T5 Dry Trailer", VehicleType.TRAILER));
-            }
-            case "crowbar" -> {
-                Player player = (Player) commandSender;
-                player.getInventory().addItem(ItemGenerator.getCrowbar());
-            }
-            case "shop" -> {
-                Player player = (Player) commandSender;
-                PurchaseMenu.openPurchaseMenu(player);
+            switch (strings[0]) {
+                case "shop" -> {
+                    Player player = (Player) commandSender;
+                    PurchaseMenu.openPurchaseMenu(player);
+                }
+                case "crowbar" -> {
+                    Player player = (Player) commandSender;
+                    player.getInventory().addItem(ItemGenerator.getCrowbar());
+                }
+                case "help" -> {
+                    sendHelpMsg((Player) commandSender);
+                }
             }
         }
         return false;
+    }
+
+    public void sendHelpMsg(Player player){
+        ComponentBuilder builder = new ComponentBuilder();
+        builder.append("=== War Thunder ===").color(ChatColor.GOLD)
+                .append("/mt shop | Opens the shop").color(ChatColor.GREEN)
+                .append("/mt crowbar | Gives you a crowbar used to open trailers (unused)").color(ChatColor.GREEN);
+        player.spigot().sendMessage(ChatMessageType.CHAT, builder.create());
     }
 }

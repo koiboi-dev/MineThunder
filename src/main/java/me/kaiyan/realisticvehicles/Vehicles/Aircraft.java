@@ -109,7 +109,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                 } else {
                     event.getPlayer().sendMessage(ChatColor.GOLD+"Retracted Landing Gear");
                 }
-                System.out.println("Gear State: "+landingGearExtended);
+                RealisticVehicles.debugLog("Gear State: "+landingGearExtended);
                 model.setGearState(landingGearExtended);
                 cooldown = 40;
             }
@@ -168,7 +168,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                 Vector vec = new Vector(0, 0, 1).rotateAroundZ(Math.toRadians(getPitch())).rotateAroundY(Math.toRadians(getYaw()));
                 RayTraceResult otherHit = getWorld().rayTraceBlocks(getLoc().clone().add(new Vector(0, 0.5, 0)), vec, getSpeed() + 0.5, FluidCollisionMode.ALWAYS);
                 if (otherHit != null) {
-                    System.out.println("Hit Thing.");
+                    RealisticVehicles.debugLog("Hit Thing.");
                     if (Objects.requireNonNull(otherHit.getHitBlock()).getType().isSolid()) {
                         if (isCrashing()) {
                             float crashChange = (float) (getSpeed() * Math.max(0.25, Math.random() * 0.5));
@@ -196,14 +196,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                             }
                             getWorld().createExplosion(getLoc(), (float) Math.min(settings.getWeight() + (getSpeed() / settings.getWeight()), 8));
                         } else {
-                            Vector dir;
-                            if (speed >= 0) {
-                                dir = new Vector(-Math.sin(Math.toRadians(getYaw())), 0, Math.cos(Math.toRadians(getYaw())));
-                            } else {
-                                dir = new Vector(-Math.sin(Math.toRadians(getYaw() + 180)), 0, Math.cos(Math.toRadians(getYaw() + 180)));
-                            }
-
-                            getLoc().add(dir.clone().multiply(settings.getLength() - getLoc().distance(otherHit.getHitPosition().toLocation(getWorld()))));
+                            pushAgainstHit(vec, otherHit);
                         }
                     } else if (otherHit.getHitBlock().isLiquid()) {
                         explode();
@@ -239,6 +232,10 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
         }
     }
 
+    public void pushAgainstHit(Vector dir, RayTraceResult motionCheck){
+        getLoc().subtract(dir.clone().multiply(settings.getLength() - getLoc().distance(motionCheck.getHitPosition().toLocation(getBaseSeat().getWorld()))));
+    }
+
     private boolean firing = false;
     public void setFiring(boolean firing){
         this.firing = firing;
@@ -266,7 +263,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
                     return;
                 }
                 bullets--;
-                System.out.println(fireFrom);
+                RealisticVehicles.debugLog(fireFrom);
                 new ProjectileShell(fireFrom.toLocation(getWorld()), (float) getYaw(), (float) getPitch(), seatedPlayer, settings.getBullet(), (float) getSpeed());
                 seatedPlayer.getWorld().playSound(fireFrom.toLocation(getWorld()), Sound.ENTITY_GENERIC_EXPLODE, 30, 2);
             }
@@ -290,7 +287,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
             meta.setDisplayName(selectedPylon+" :Selected: "+missiles.getMissiles().get(selectedPylon).getSettings().getName());
             meta.setCustomModelData(missiles.getMissiles().get(selectedPylon).getSettings().getTexID());
             item.setItemMeta(meta);
-            System.out.println("Updated!");
+            RealisticVehicles.debugLog("Updated!");
         } else {
             ItemStack item = seatedPlayer.getInventory().getItem(FIRE_MISSILE_SLOT);
             if (item == null){

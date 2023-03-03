@@ -42,12 +42,12 @@ public class EventListener implements Listener {
         Entity en = event.getRightClicked();
 
         if (en.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
-            System.out.println("Sleep Key'd");
+            //RealisticVehicles.debugLog("Sleep Key'd");
             String[] info = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-            System.out.println(info[0]);
+            //RealisticVehicles.debugLog(info[0]);
             switch (VehicleType.valueOf(info[1])){
                 case CAR -> {
-                    System.out.println("Car");
+                    RealisticVehicles.debugLog("Car");
                     // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
                     //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
                     ArmorStand seat = null;
@@ -57,7 +57,7 @@ public class EventListener implements Listener {
                         if (ent instanceof ArmorStand stand){
                             if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
                                 String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-                                System.out.println(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[1]);
+                                RealisticVehicles.debugLog(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[1]);
                                 if (!Objects.equals(sinfo[0], info[0])){
                                     continue;
                                 }
@@ -125,7 +125,7 @@ public class EventListener implements Listener {
                         if (ent instanceof ArmorStand stand){
                             if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
                                 String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-                                System.out.println(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[2]);
+                                RealisticVehicles.debugLog(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[2]);
                                 if (!Objects.equals(sinfo[0], info[0])){
                                     continue;
                                 }
@@ -156,7 +156,7 @@ public class EventListener implements Listener {
             //String type = en.getPersistentDataContainer().get(vehicleType, PersistentDataType.STRING);
 
             VehicleInterface inter = Updates.getVehicleFromStand(stand);
-            System.out.println(inter);
+            RealisticVehicles.debugLog(inter);
 
             if (inter instanceof Tank tank){
                 if (event.getPlayer().isSneaking()){
@@ -313,7 +313,7 @@ public class EventListener implements Listener {
         new BukkitRunnable(){
             @Override
             public void run() {
-                System.out.println("Loaded Player: "+Objects.requireNonNull(RealisticVehicles.getInstance().getConfig().getString("resource-pack")));
+                RealisticVehicles.debugLog("Loaded Player: "+Objects.requireNonNull(RealisticVehicles.getInstance().getConfig().getString("resource-pack")));
                 event.getPlayer().setResourcePack(Objects.requireNonNull(RealisticVehicles.getInstance().getConfig().getString("resource-pack")));
             }
         }.runTaskLater(RealisticVehicles.getInstance(), 200);

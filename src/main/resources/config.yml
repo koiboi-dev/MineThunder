@@ -1,4 +1,5 @@
-resource-pack: https://www.dropbox.com/s/a0tvp6mris6xjg0/TankPackV23.zip?dl=1
+resource-pack: https://www.dropbox.com/s/ax1jx7mfto568ax/TankPackV24.zip?dl=1
+debug-mode: false
 
 # Vehicle Sleep Settings
 # Vehicle sleep is when the vehicle stops being calculated for physics and other events

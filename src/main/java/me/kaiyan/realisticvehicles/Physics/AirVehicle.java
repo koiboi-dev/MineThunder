@@ -198,7 +198,7 @@ public class AirVehicle{
         if (getSpeed() > 0) {
             addSpeed(-((getSpeed() * getSpeed()) * settings.getDragCoefficient()));
         }
-        //System.out.println(pitch+" : "+yaw);
+        //RealisticVehicles.debugLog(pitch+" : "+yaw);
 
         stalling = false;
 
@@ -220,7 +220,7 @@ public class AirVehicle{
             moveBy.rotateAroundY(-Math.toRadians(yaw));
             moveBy.multiply(getSpeed());
             float yFall = (float) (1f-((getSpeed()/settings.getLiftSpeed()*0.6)));
-            System.out.println(yFall);
+            RealisticVehicles.debugLog(yFall);
             yFall *= damageModel.getComponentDamagePercent(ComponentType.WING);
             yFall = Math.max(-0.25f, yFall);
 
@@ -319,7 +319,7 @@ public class AirVehicle{
                         }
                     }
                 }
-                System.out.println(damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR));
+                RealisticVehicles.debugLog(damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR));
                 if (damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR) <= 0 && !invulnerable){
                     startCrashing();
                 }

@@ -9,7 +9,7 @@
   "width": 1,
   "length": 3,
   "seatpos": [0 ,0, 0],
-  "startfuel": 20,
+  "startFuel": 20,
   "fuelConsumptionRate": 0.1,
   "idleFuelConsumption":  0,
   "maxFuel": 150,

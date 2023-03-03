@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.Menus;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
+import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.ItemGenerator;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
@@ -105,8 +106,8 @@ public class PurchaseMenu {
             list.add(settings);
             PurchaseMenu.extraVehicles.put(settings.getShopGroup(), list);
         }
-        System.out.println("Added new vehicle: "+settings.getType()+" : "+settings.getShopGroup());
-        System.out.println(extraVehicles);
+        RealisticVehicles.debugLog("Added new vehicle: "+settings.getType()+" : "+settings.getShopGroup());
+        RealisticVehicles.debugLog(extraVehicles);
     }
 
     public static ItemStack getVehicleItem(String name, int id){

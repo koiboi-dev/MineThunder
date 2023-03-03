@@ -84,6 +84,7 @@ public class RealisticVehicles extends JavaPlugin {
 
         getLogger().info("Loading Config...");
         saveDefaultConfig();
+        debugMode = getConfig().getBoolean("debug-mode");
 
         VEHICLESLEEPTIME = (int) Math.floor(getConfig().getDouble("sleep-time")*60*20);
 
@@ -384,10 +385,12 @@ public class RealisticVehicles extends JavaPlugin {
     public void onDisable() {
         for (FixedUpdate inter : Updates.fixedUpdates){
             if (inter instanceof VehicleInterface vinter){
-                if (vinter instanceof Aircraft craft){
-                    craft.getSeatedPlayer().getInventory().setContents(craft.getPlayerInv());
-                } else if (vinter instanceof Tank tank){
-                    tank.getSeatedPlayer().getInventory().setContents(tank.getPlayerInv());
+                if (vinter.getSeatedPlayer() != null) {
+                    if (vinter instanceof Aircraft craft) {
+                        craft.getSeatedPlayer().getInventory().setContents(craft.getPlayerInv());
+                    } else if (vinter instanceof Tank tank) {
+                        tank.getSeatedPlayer().getInventory().setContents(tank.getPlayerInv());
+                    }
                 }
             }
             if (inter instanceof Sleepable sleep){
@@ -426,7 +429,7 @@ public class RealisticVehicles extends JavaPlugin {
             }
         }.runTaskTimer(RealisticVehicles.getInstance(), 0, 10);
     }
-    public static final boolean debugMode = true;
+    public static boolean debugMode = false;
     public static void debugLog(String str){
         if (debugMode){
             getInstance().getLogger().info(str);
@@ -493,7 +496,7 @@ public class RealisticVehicles extends JavaPlugin {
                 if (en instanceof ArmorStand stand){
                     if (en.getPersistentDataContainer().has(SLEEPKEY, PersistentDataType.STRING)){
                         String id = en.getPersistentDataContainer().get(SLEEPKEY, PersistentDataType.STRING).split(";")[0];
-                        System.out.println("Got Key: "+id);
+                        RealisticVehicles.debugLog("Got Key: "+id);
                         if (!sleeps.containsKey(id)) {
                             sleeps.put(id, new ArrayList<>());
                         }
@@ -502,14 +505,14 @@ public class RealisticVehicles extends JavaPlugin {
                 }
             }
         }
-        System.out.println(sleeps);
+        RealisticVehicles.debugLog(sleeps);
         getStaticLogger().info("Waking sleeping vehicles...");
         for (Map.Entry<String, List<ArmorStand>> entry : sleeps.entrySet()){
             ArmorStand en = entry.getValue().get(0);
             // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
             //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
             String[] info = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-            System.out.println(info[1]);
+            RealisticVehicles.debugLog(info[1]);
             switch (VehicleType.valueOf(info[1])){
                 case CAR -> {
                     Location loc = en.getLocation().clone();
@@ -539,7 +542,7 @@ public class RealisticVehicles extends JavaPlugin {
                         String data = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING);
                         stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
                         if (Objects.equals(data.split(";")[0], info[0])) {
-                            System.out.println(data);
+                            RealisticVehicles.debugLog(data);
                             if (data.contains("gun")) gun = stand;
                             else if (data.contains("turret")) turret = stand;
                             else if (data.contains("base")) base = stand;

@@ -42,9 +42,9 @@ public class VehicleSaver {
     public VehicleInterface createCraft(Location loc){
         if (vType == VehicleType.AIR){
             try {
-                System.out.println("Creating Craft...");
+                RealisticVehicles.debugLog("Creating Craft...");
                 Aircraft craft = new Aircraft(loc, type);
-                System.out.println("Updating new vars");
+                RealisticVehicles.debugLog("Updating new vars");
                 craft.getFuelTank().refuelAmountOfFuel(FuelType.getTypeFromName(savedFuelType), 0);
                 craft.getFuelTank().setFuel(savedFuel);
                 craft.setBullets(savedShells[0]);

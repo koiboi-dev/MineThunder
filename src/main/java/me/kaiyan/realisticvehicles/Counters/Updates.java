@@ -7,6 +7,7 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.DataTypes.ImpactOutData;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
+import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
 
@@ -53,7 +54,7 @@ public class Updates {
             }
             calculateShellImpacts(vehicles, shells);
             calculateCollisions(vehicles);
-            //System.out.println("UpdateSpeed: "+((System.nanoTime()-time)/1000000)+"ms");
+            //RealisticVehicles.debugLog("UpdateSpeed: "+((System.nanoTime()-time)/1000000)+"ms");
         } catch (ConcurrentModificationException e){
             e.printStackTrace();
         }
@@ -82,7 +83,7 @@ public class Updates {
                 continue;
             }
             for (ProjectileShell shell : boundingShells){
-                System.out.println("Hit");
+                RealisticVehicles.debugLog("Hit");
                 ImpactOutData data = vehicle.getDamageModel().shellImpact(shell, vehicle.getLoc(), shell.loc, vehicle.getVehicleYaw(), (float) vehicle.getTurretYaw(), shell.getYaw(), shell.getPitch(), shell.loc.getWorld(), 0, true, shell.player);
                 shell.closeThis(1);
 
@@ -145,7 +146,7 @@ public class Updates {
 
     public static VehicleInterface getPlayerVehicle(Player player) {
         for (VehicleInterface vehicle : getActiveVehicles()) {
-            //System.out.println("Vehicle:"+vehicle);
+            //RealisticVehicles.debugLog("Vehicle:"+vehicle);
             if (vehicle.getSeatedPlayer() == player) {
                 return vehicle;
             }

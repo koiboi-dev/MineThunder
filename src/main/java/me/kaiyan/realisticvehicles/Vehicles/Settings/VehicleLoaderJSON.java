@@ -112,7 +112,7 @@ public class VehicleLoaderJSON {
                             missile.getDouble("scanDistance")
                     ));
                 }
-                System.out.println(modelFromJSON(obj.getJSONObject("model")));
+                RealisticVehicles.debugLog(modelFromJSON(obj.getJSONObject("model")));
                 settings.setDamageModel(modelFromJSON(obj.getJSONObject("model")));
 
                 settings.setFuelData(
