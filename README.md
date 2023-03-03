@@ -21,6 +21,8 @@ Adds Semi-Realistic planes, cars and tanks to Minecraft!
 # CURRENTLY VERY WORK IN PROGRESS, DO NOT USE ON PRODUCTION SERVERS AS IT MAY RESET PLAYER INVENTORIES.
 This plugin is HEAVILY WIP and despite over 200+ hours being put into it already it is still very buggy and player inventories may be reset due to tanks and planes using custom items.
 
+You can compile it and put it onto your servers if you like, however I cannot help if player inventories or any other problems arise as a result.
+
 # Planes
 Planes currently use a Speed + Angle system, they will follow where the player looks and gain / loose speed depending on their angle relative to the ground.
 They also have Missile Support and can fire Shells at ground vehicles and other aircraft.
