@@ -3,10 +3,12 @@ package me.kaiyan.realisticvehicles.DataTypes;
 public class ImpactOutData {
     private int destroyedIndex;
     private int playerDamage;
+    private boolean goneThrough;
 
-    public ImpactOutData(int destroyedIndex, int playerDamage) {
+    public ImpactOutData(int destroyedIndex, int playerDamage, boolean goneThrough) {
         this.destroyedIndex = destroyedIndex;
         this.playerDamage = playerDamage;
+        this.goneThrough = goneThrough;
     }
 
     public void setDestroyedIndex(int destroyedIndex) {
@@ -26,5 +28,13 @@ public class ImpactOutData {
     }
     public void addPlayerDamage(int damage){
         playerDamage += damage;
+    }
+
+    public boolean getGoneThrough() {
+        return goneThrough;
+    }
+
+    public void setGoneThrough(boolean goneThrough) {
+        this.goneThrough = goneThrough;
     }
 }

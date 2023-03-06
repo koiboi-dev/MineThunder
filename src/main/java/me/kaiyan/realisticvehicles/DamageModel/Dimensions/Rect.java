@@ -1,8 +1,9 @@
 package me.kaiyan.realisticvehicles.DamageModel.Dimensions;
 
 import java.util.Random;
+import java.util.Vector;
 
-public class Rect {
+public class Rect implements Cloneable{
     public final double x;
     public final double y;
     public final double z;
@@ -42,5 +43,14 @@ public class Rect {
         double ry = y+rand.nextDouble()*ysize;
         double rz = z+rand.nextDouble()*zsize;
         return new VectorD(rx, ry, rz);
+    }
+
+    @Override
+    public Rect clone() {
+        try {
+            return (Rect) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

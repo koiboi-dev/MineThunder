@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.VehicleManagers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
@@ -76,9 +77,6 @@ public class VehicleSaver {
             Car craft = new Car(loc, CarSettings.getCarSettings(type));
             craft.getFuelTank().setFuel(savedFuel);
             craft.getFuelTank().refuelAmountOfFuel(FuelType.getTypeFromName(savedFuelType), 0);
-            craft.getShellsAmmo()[0] = savedShells[0];
-            craft.getShellsAmmo()[1] = savedShells[1];
-            craft.getShellsAmmo()[2] = savedShells[2];
             damageModel.updateDamageModel(craft.getDamageModel());
             if (craft.getMissileHolder() != null) {
                 missiles.updateMissileHolder(craft.getMissileHolder(), loc);
@@ -117,7 +115,7 @@ public class VehicleSaver {
     }
 
     public String toJson(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 
     public static VehicleSaver fromJson(String json){

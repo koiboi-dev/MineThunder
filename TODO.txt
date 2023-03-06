@@ -11,11 +11,16 @@ X REMOVE TRAILERS?
 
 - CHOOSE: Paid OR Donate.
 
-Long Term:
-- ADD COMMUNITY MODDING SUPPORT
-
-
-
+TODO FOR NEXT TIME:
+- Make shell impact only stop after bullet travelled
+- Decrease boundary size
+- Declutter impacts, make the components damaged helpful
+- Fix MIG 32 having no damage model
+- Finish JSON implementation
+- Tanks
+- Cars
+- Make tools public
+- W O R K
 
 Update Ground Vehicles:
 - Multicrew tanks?

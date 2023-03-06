@@ -11,7 +11,7 @@ public class Version_1_19_3 implements Version{
             stand.teleport(loc.toLocation(stand.getWorld()));
             stand.setRotation(yaw, pitch);
         } else {
-            ((org.bukkit.craftbukkit.v1_19_R2.entity.CraftArmorStand) stand).getHandle().o(loc.getX(), loc.getY(), loc.getZ());
+            ((org.bukkit.craftbukkit.v1_19_R2.entity.CraftArmorStand) stand).getHandle().b(loc.getX(), loc.getY(), loc.getZ(), 0, 0);
         }
     }
 }

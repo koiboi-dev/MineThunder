@@ -15,10 +15,10 @@ import java.util.List;
 import java.util.Objects;
 
 public class ProjectileShell extends Shell implements FixedUpdate {
-    public final Location loc;
+    public Location loc;
     public Location prevLoc;
     public final Vector moveBy;
-    public final Player player;
+    public Player player;
 
     public static final float gravity = 0.05f;
 
@@ -79,9 +79,10 @@ public class ProjectileShell extends Shell implements FixedUpdate {
 
 
         if (tracer) {
-            RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.RED, 6));
+            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,2, new Particle.DustOptions(Color.RED, 4), true);
+            //RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.RED, 6));
         } else {
-            RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.GRAY, 3));
+            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,1, new Particle.DustOptions(Color.GRAY, 2), true);
         }
 
         if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()) {

@@ -68,6 +68,7 @@ public class RealisticVehicles extends JavaPlugin {
 
     @Override
     public void onEnable() {
+
         plugin = this;
         double time = System.currentTimeMillis();
         getLogger().info("Launching Mine Thunder!");

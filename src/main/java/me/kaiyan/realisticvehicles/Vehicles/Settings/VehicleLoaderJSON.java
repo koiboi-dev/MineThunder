@@ -112,8 +112,8 @@ public class VehicleLoaderJSON {
                             missile.getDouble("scanDistance")
                     ));
                 }
-                RealisticVehicles.debugLog(modelFromJSON(obj.getJSONObject("model")));
-                settings.setDamageModel(modelFromJSON(obj.getJSONObject("model")));
+                RealisticVehicles.debugLog(modelFromJSON(obj.getJSONObject("damageModel")));
+                settings.setDamageModel(modelFromJSON(obj.getJSONObject("damageModel")));
 
                 settings.setFuelData(
                         obj.getFloat("startFuel"),

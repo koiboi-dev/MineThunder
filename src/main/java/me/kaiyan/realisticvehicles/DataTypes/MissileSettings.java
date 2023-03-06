@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
 
 public class MissileSettings {
@@ -69,7 +70,7 @@ public class MissileSettings {
     }
 
     public String toJson(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 
     public String toString(){
@@ -77,6 +78,6 @@ public class MissileSettings {
     }
 
     public MissileSettings fromJson(String json){
-        return new Gson().fromJson(json, MissileSettings.class);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().fromJson(json, MissileSettings.class);
     }
 }

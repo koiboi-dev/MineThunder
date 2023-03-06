@@ -6,7 +6,7 @@
 
     <groupId>me.kaiyan.realisticvehicles</groupId>
     <artifactId>RealisticVehicles</artifactId>
-    <version>0.0.2</version>
+    <version>0.0.4</version>
 
     <properties>
         <maven.compiler.source>16</maven.compiler.source>

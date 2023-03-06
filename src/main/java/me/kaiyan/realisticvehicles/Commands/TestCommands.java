@@ -112,6 +112,7 @@ public class TestCommands implements CommandExecutor {
         } else {
             if (strings.length == 0){
                 sendHelpMsg((Player) commandSender);
+                return false;
             }
             switch (strings[0]) {
                 case "shop" -> {
@@ -122,9 +123,7 @@ public class TestCommands implements CommandExecutor {
                     Player player = (Player) commandSender;
                     player.getInventory().addItem(ItemGenerator.getCrowbar());
                 }
-                case "help" -> {
-                    sendHelpMsg((Player) commandSender);
-                }
+                case "help" -> sendHelpMsg((Player) commandSender);
             }
         }
         return false;
@@ -132,8 +131,8 @@ public class TestCommands implements CommandExecutor {
 
     public void sendHelpMsg(Player player){
         ComponentBuilder builder = new ComponentBuilder();
-        builder.append("=== War Thunder ===").color(ChatColor.GOLD)
-                .append("/mt shop | Opens the shop").color(ChatColor.GREEN)
+        builder.append("=== War Thunder ===\n").color(ChatColor.GOLD)
+                .append("/mt shop | Opens the shop\n").color(ChatColor.GREEN)
                 .append("/mt crowbar | Gives you a crowbar used to open trailers (unused)").color(ChatColor.GREEN);
         player.spigot().sendMessage(ChatMessageType.CHAT, builder.create());
     }

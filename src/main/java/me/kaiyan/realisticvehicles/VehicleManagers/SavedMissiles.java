@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.VehicleManagers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import me.kaiyan.realisticvehicles.Models.MissileSlot;
@@ -34,11 +35,11 @@ public class SavedMissiles implements Serializable {
     }
 
     public String toJson(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
     public String toString() {return toJson();}
 
     public static SavedMissiles fromJson(String json){
-        return new Gson().fromJson(json, SavedMissiles.class);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().fromJson(json, SavedMissiles.class);
     }
 }

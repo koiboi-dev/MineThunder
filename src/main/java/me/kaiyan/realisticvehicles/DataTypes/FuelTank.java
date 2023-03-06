@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.DataTypes;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 
 public class FuelTank {
@@ -85,6 +86,6 @@ public class FuelTank {
     }
 
     public String toJson(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 }

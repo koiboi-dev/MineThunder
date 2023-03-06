@@ -75,7 +75,7 @@
       "scanDistance": 1000
     }
   ],
-  "model":{
+  "damageModel":{
     "lowerHalf": [0, 0, 0, 10, 10, 10, true],
     "collision": 6,
     "comps":[

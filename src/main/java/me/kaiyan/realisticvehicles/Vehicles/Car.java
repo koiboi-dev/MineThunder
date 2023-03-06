@@ -118,7 +118,7 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
         for (TrailerHitch hitch : getTrailerHitches()) {
             world.spawnParticle(Particle.CLOUD, hitch.getLoc(), 1);
         }
-        harvester.flashPoints(getLoc(), getVehicleYaw());
+        //harvester.flashPoints(getLoc(), getVehicleYaw());
     }
 
     @Override

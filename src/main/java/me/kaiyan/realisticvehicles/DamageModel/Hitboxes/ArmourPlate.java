@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.DamageModel.Hitboxes;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.Rect;
 import org.bukkit.Particle;
 import org.bukkit.World;
@@ -43,15 +44,11 @@ public class ArmourPlate extends Rect implements Cloneable {
 
     @Override
     public String toString() {
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 
     @Override
     public ArmourPlate clone() {
-        try {
-            return (ArmourPlate) super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        return (ArmourPlate) super.clone();
     }
 }

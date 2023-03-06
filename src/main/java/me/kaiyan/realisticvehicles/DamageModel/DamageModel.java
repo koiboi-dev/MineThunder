@@ -28,6 +28,23 @@ public class DamageModel implements Cloneable{
     public static final double randSpeed = 0.05;
 
     @Nonnull
+    public Rect getLowerHalf() {
+        return lowerHalf;
+    }
+
+    @Nullable
+    public Rect getUpperHalf() {
+        return upperHalf;
+    }
+
+    public Rect getTotalBox(){
+        if (upperHalf == null){
+            return lowerHalf.clone();
+        }
+        return new Rect(lowerHalf.x, lowerHalf.y, lowerHalf.z, lowerHalf.xsize, upperHalf.ysize+lowerHalf.ysize, lowerHalf.xsize, false);
+    }
+
+    @Nonnull
     private final Rect lowerHalf;
     @Nullable
     private final Rect upperHalf;
@@ -41,7 +58,7 @@ public class DamageModel implements Cloneable{
      * @param lowerHalf Lower hit box
      * @param upperHalf Upper hit box, Null if no turret
      */
-    public DamageModel(@Nonnull Rect lowerHalf, @Nullable Rect upperHalf, float collisionSphere){
+    public DamageModel(@Nonnull Rect lowerHalf, @Nullable Rect upperHalf, float collisionSphere) {
         armour = new ArrayList<>();
         components = new ArrayList<>();
         this.lowerHalf = lowerHalf;
@@ -79,9 +96,9 @@ public class DamageModel implements Cloneable{
     public ImpactOutData shellImpact(Shell shell, final double x, final double y, final double z, final double vx, final double vy, final double vz, final float vehicleyaw, final float turretyaw, float yaw, float pitch, @Nonnull World world, int override, boolean sendResult, Player player){
         if (!finished){
             Bukkit.getLogger().severe("DAMAGED MODEL CALLED WITHOUT BEING FINISHED, ABORTING OPERATION.\nThis could be due to a improperly generated damage model\nFOR DEVELOPERS: try calling DamageModel.finished() on the damagemodel");
-            return new ImpactOutData(-1, -1);
+            return new ImpactOutData(-1, -1, false);
         }
-        ImpactOutData data = new ImpactOutData(-1, -1);
+        ImpactOutData data = new ImpactOutData(-1, -1, false);
 
         double mx = vx-x;
         //RealisticVehicles.debug(mx + " | "+x+" - "+vx);
@@ -314,8 +331,10 @@ public class DamageModel implements Cloneable{
 
         if (pennedArmour && finLoops == -1){
             player.sendMessage(ChatColor.RED+"Gone through enemy");
+            data.setGoneThrough(true);
         } else if (finLoops == -1){
             player.sendMessage(ChatColor.RED+"Missed.");
+            data.setGoneThrough(true);
         }
         if (pennedArmour){
         player.sendMessage(ChatColor.YELLOW+"Penned armour");
@@ -337,9 +356,9 @@ public class DamageModel implements Cloneable{
     public ImpactOutData explosionImpact(double power, final double x, final double y, final double z, final double vx, final double vy, final double vz, Player player){
         if (!finished){
             Bukkit.getLogger().severe("DAMAGED MODEL CALLED WITHOUT BEING FINISHED, ABORTING OPERATION.\nThis could be due to a improperly generated damage model\nFOR DEVELOPERS: try calling DamageModel.finished() on the damagemodel");
-            return new ImpactOutData(-1, -1);
+            return new ImpactOutData(-1, -1, false);
         }
-        ImpactOutData data = new ImpactOutData(-1, -1);
+        ImpactOutData data = new ImpactOutData(-1, -1, false);
 
         double mx = vx-x;
         //RealisticVehicles.debug(mx + " | "+x+" - "+vx);

@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.DamageModel.Hitboxes;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DamageModel.Dimensions.Rect;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import org.bukkit.Particle;
@@ -83,13 +84,9 @@ public class Component extends Rect implements Cloneable{
 
     @Override
     public Component clone() {
-        try {
-            Component clone = (Component) super.clone();
-            clone.type = type;
-            return clone;
-        } catch (CloneNotSupportedException e) {
-            throw new AssertionError();
-        }
+        Component clone = (Component) super.clone();
+        clone.type = type;
+        return clone;
     }
 
     public Vector getCornerVector(){
@@ -101,6 +98,6 @@ public class Component extends Rect implements Cloneable{
 
     @Override
     public String toString() {
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 }

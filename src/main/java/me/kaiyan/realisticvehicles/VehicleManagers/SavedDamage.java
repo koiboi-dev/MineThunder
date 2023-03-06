@@ -1,6 +1,7 @@
 package me.kaiyan.realisticvehicles.VehicleManagers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.ArmourPlate;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
@@ -23,11 +24,11 @@ public class SavedDamage implements Serializable {
     }
 
     public static SavedDamage fromJson(String json){
-        return new Gson().fromJson(json, SavedDamage.class);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().fromJson(json, SavedDamage.class);
     }
 
     public String toJson(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(this);
     }
 
     public String toString() {return toJson();}
