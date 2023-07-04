@@ -79,10 +79,10 @@ public class ProjectileShell extends Shell implements FixedUpdate {
 
 
         if (tracer) {
-            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,2, new Particle.DustOptions(Color.RED, 4), true);
+            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,20, new Particle.DustOptions(Color.RED, 4), true);
             //RealisticVehicles.spawnParticle(loc, new Particle.DustOptions(Color.RED, 6));
         } else {
-            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,1, new Particle.DustOptions(Color.GRAY, 2), true);
+            Objects.requireNonNull(loc.getWorld()).spawnParticle(Particle.REDSTONE, loc,0,0,0,0,30, new Particle.DustOptions(Color.GRAY, 2), true);
         }
 
         if (Objects.requireNonNull(loc.getWorld()).getBlockAt(loc).getType().isSolid()) {

@@ -254,44 +254,6 @@ public class RealisticVehicles extends JavaPlugin {
         //endregion
 
         //region Planes
-        //region MIG 31
-        DamageModel migModel = new DamageModel(new Rect(0, 0, 0, 10, 10, 10, true), null, 6);
-
-        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA));
-        migModel.addComponent(new Component(ComponentType.WING, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 2, 0.2, 2, true, false, Particle.CLOUD, Particle.VILLAGER_ANGRY, Particle.LAVA));
-        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, 2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY));
-        migModel.addComponent(new Component(ComponentType.FUEL, 0.05, 5, 3.5, 2.5, false, -2, 1.5, 0, 1, 0.15, 1.5, true, false, Particle.LAVA, Particle.DRIP_LAVA, Particle.VILLAGER_ANGRY));
-        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, 1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.AILERON, 0.05, 5, 3.5, 2.5, false, -1.75, 1.5, -1, 1.75, 0.15, 0.4, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, 1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.ELEVATOR, 0.05, 5, 3.5, 2.5, false, -1.75, 1, -1.5, 1.5, 0.15, 1, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, 1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.RUDDER, 0.05, 5, 3.5, 2.5, false, -1.25, 2.5, -1.5, 0.25, 1.25, 1.25, true, false, Particle.CLOUD, Particle.CLOUD, Particle.CLOUD));
-        migModel.addComponent(new Component(ComponentType.ENGINE, 0.25, 3, 2, 1, false, 0, 1.25, -1.25, 0.75, 1.25, 1.25, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY));
-        migModel.addComponent(new Component(ComponentType.LANDINGGEAR, 0.25, 3, 2, 1, false, 0, 0.5, 1, 0.5, 1, 0.5, true, false, Particle.LAVA, Particle.LAVA, Particle.VILLAGER_ANGRY));
-
-        migModel.finish();
-
-        AirVehicleSettings migSettings = new AirVehicleSettings("MIG 31", 601, 500, 1.5f, false, "Planes");
-        migSettings.setSeatPos(new Vector(0, 0, 0));
-        migSettings.setControlData(1.5, 2, 3, 1.5, 1.75);
-        migSettings.setFlightData(6, 4, 0.025, 0.002, 1, 2.75);
-        migSettings.setSize(1, 3);
-        migSettings.setDamageModel(migModel);
-        migSettings.setFireRate(0);
-        migSettings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
-        migSettings.addGunPosition(new Vector(0.5, -0.1, 0.25));
-        migSettings.setFuelData(20, 0.1f, 0, 150, 0.05f);
-
-        migSettings.addModelSegment(new int[]{0, 0}, 601, 602);
-
-        migSettings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
-        migSettings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
-        migSettings.addMissile(new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000));
-        migSettings.setRadar(60, 1000);
-
-        migSettings.register();
-        //endregion
         //region F-15
         DamageModel f15Model = new DamageModel(new Rect(0, 0, 0, 15, 15, 15, true), null, 10);
 
@@ -333,7 +295,6 @@ public class RealisticVehicles extends JavaPlugin {
         f15Settings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
         f15Settings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
         f15Settings.addMissile(new MissileSettings(6, 6, 2.5f, 100, 0.05f, TrackingType.ACTIVE, "R-40 Interceptor", 701, 40, 1000));
-        f15Settings.setRadar(60, 1000);
 
         f15Settings.register();
         //endregion
@@ -341,7 +302,7 @@ public class RealisticVehicles extends JavaPlugin {
 
         //region Civilian
         //region S3-X Truck
-        CarSettings trucksettings = new CarSettings("Bessie Trucking S3-X Truck", 800, 400, 3, "Tanks");
+        CarSettings trucksettings = new CarSettings("Bessie Trucking S2-X Truck", 800, 400, 3, "Tanks");
         trucksettings.setSeatPos(new Vector(0.8, 1.3, -0.45));
         DamageModel truckModel = new DamageModel(new Rect(0, 0, 0, 6, 6, 6, true), null, 5);
         truckModel.addComponent(new Component(ComponentType.ENGINE, 5, 2, 1.5, 1, false, 0, 0.75, -0.2, 1.25, 0.75, 0.5, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA));

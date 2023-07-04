@@ -1,0 +1,12 @@
+{
+      "power": 6,
+      "speed": 6,
+      "turnRate": 2.5 ,
+      "startFuel": 100,
+      "burnRate": 0.05,
+      "trackingType": "ACTIVE",
+      "name": "R-40 INTERCEPTOR",
+      "texID": 701,
+      "scanAngle": 40,
+      "scanDistance": 1000
+}

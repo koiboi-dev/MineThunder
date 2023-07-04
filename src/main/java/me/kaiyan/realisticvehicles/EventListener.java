@@ -230,7 +230,7 @@ public class EventListener implements Listener {
     public void onPlayerInteract(PlayerInteractEvent e){
         e.setCancelled(fireWeapons(e.getItem(), e.getPlayer(), e.getAction()));
 
-        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null && e.getItem().getItemMeta().getPersistentDataContainer().has(ItemGenerator.JSONSAVE, PersistentDataType.STRING)) {
+        if (e.getAction() == Action.RIGHT_CLICK_BLOCK && e.getItem() != null && e.getItem().getItemMeta().getPersistentDataContainer().has(ItemGenerator.JSONSAVE, PersistentDataType.BYTE_ARRAY)) {
             RayTraceResult hit = e.getPlayer().getWorld().rayTraceBlocks(e.getPlayer().getEyeLocation(), e.getPlayer().getLocation().getDirection(), 4.5);
             if (hit != null && hit.getHitBlock() != null){
                 ItemGenerator.spawnVehicleFromItem(e.getItem(), hit.getHitPosition().toLocation(e.getPlayer().getWorld()));
@@ -305,10 +305,15 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
-        event.getPlayer().sendMessage(ChatColor.GREEN+
-                "========================================\n" +
-                "Installing resource pack in 10 seconds, if you do not get it please use <PLACEHOLDER>\n" +
-                "========================================");
+        new BukkitRunnable(){
+            @Override
+            public void run() {
+                event.getPlayer().sendMessage(ChatColor.GREEN+
+                        "========================================\n" +
+                        "Installing resource pack in 10 seconds, if you do not get it please use /mt resource\n" +
+                        "========================================");
+            }
+        }.runTaskLater(RealisticVehicles.getInstance(), 5);
 
         new BukkitRunnable(){
             @Override

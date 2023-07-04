@@ -7,21 +7,26 @@ import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.TrackingType;
+import me.kaiyan.realisticvehicles.DataTypes.Enums.Traversable;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.Models.MissileSlot;
+import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
+import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.GroundVehicleSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import org.bukkit.Material;
 import org.bukkit.Particle;
 import org.bukkit.util.Vector;
+import org.checkerframework.checker.units.qual.K;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Scanner;
 
@@ -29,11 +34,27 @@ import java.util.Scanner;
  * Used to load vehicles from JSON files.
  */
 public class VehicleLoaderJSON {
+    public static HashMap<String, MissileSettings> missilesettings = new HashMap<>();
     public static void loadVehicles(){
         File files = new File(RealisticVehicles.getInstance().getDataFolder()+"/vehicles");
+        File missile = new File(RealisticVehicles.getInstance().getDataFolder()+"/missiles");
         if (!files.exists()){
             files.mkdir();
             RealisticVehicles.getInstance().saveResource("vehicles/mig31.json", false);
+            RealisticVehicles.getInstance().saveResource("vehicles/challengerII.json", false);
+        }
+        if (!missile.exists()){
+            missile.mkdir();
+            RealisticVehicles.getInstance().saveResource("missiles/r40inter.json", false);
+        }
+        for (File miss : missile.listFiles()){
+            try {
+                String content = new Scanner(miss).useDelimiter("\\Z").next();
+                missileFromJSON(content);
+            } catch (FileNotFoundException e) {
+                RealisticVehicles.getInstance().getLogger().severe("FAILED TO LAUNCH: NO FILE FOUND WHILE READING VEHICLES.");
+                throw new RuntimeException(e);
+            }
         }
         for (File file : files.listFiles()){
             try {
@@ -44,6 +65,22 @@ public class VehicleLoaderJSON {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    public static void missileFromJSON(String json){
+        JSONObject missile = new JSONObject(json);
+        missilesettings.put(missile.getString("name"), new MissileSettings(
+                missile.getFloat("power"),
+                missile.getFloat("speed"),
+                missile.getFloat("turnRate"),
+                missile.getFloat("startFuel"),
+                missile.getFloat("burnRate"),
+                TrackingType.valueOf(missile.getString("trackingType")),
+                missile.getString("name"),
+                missile.getInt("texID"),
+                missile.getDouble("scanAngle"),
+                missile.getDouble("scanDistance")
+        ));
     }
     public static void settingsFromJSON(String settingJSON){
         JSONObject obj = new JSONObject(settingJSON);
@@ -98,19 +135,7 @@ public class VehicleLoaderJSON {
                     ));
                 }
                 for (Object misObj : obj.getJSONArray("missileSettings")){
-                    JSONObject missile = (JSONObject) misObj;
-                    settings.addMissile(new MissileSettings(
-                            missile.getFloat("power"),
-                            missile.getFloat("speed"),
-                            missile.getFloat("turnRate"),
-                            missile.getFloat("startFuel"),
-                            missile.getFloat("burnRate"),
-                            TrackingType.valueOf(missile.getString("trackingType")),
-                            missile.getString("name"),
-                            missile.getInt("texID"),
-                            missile.getDouble("scanAngle"),
-                            missile.getDouble("scanDistance")
-                    ));
+                    settings.addMissile(missilesettings.get((String) misObj));
                 }
                 RealisticVehicles.debugLog(modelFromJSON(obj.getJSONObject("damageModel")));
                 settings.setDamageModel(modelFromJSON(obj.getJSONObject("damageModel")));
@@ -127,17 +152,56 @@ public class VehicleLoaderJSON {
             }
             case TANK -> {
                 TankSettings settings = new TankSettings(obj.getString("type"), obj.getInt("texID"), obj.getFloat("price"), obj.getString("shopgroup"));
+                setGroundVehicleData(settings, obj.getJSONObject("vehicleData"));
                 settings.setPositions(
                         vectorFromJson(obj.getJSONArray("seatPos")),
                         vectorFromJson(obj.getJSONArray("seatRaisedPos")),
                         vectorFromJson(obj.getJSONArray("gunBarrelPos")),
                         vectorFromJson(obj.getJSONArray("machineGunPos"))
                 );
-                //settings.setTankData();
-                settings.setDamageModel(modelFromJSON(obj.getJSONObject("model")));
+                JSONObject tobj = obj.getJSONObject("tankData");
+                settings.setTankData(
+                        tobj.getFloat("traverseSpeed"),
+                        tobj.getFloat("elevateSpeed"),
+                        tobj.getFloat("minPitch"),
+                        tobj.getFloat("maxPitch"),
+                        tobj.getFloat("gunRecoilCooldown"),
+                        tobj.getFloat("gunRecoil")
+                );
+                JSONArray ary = obj.getJSONArray("shells");
+                int loops = 0;
+                for (Object shell : ary){
+                    settings.setShellData(loops,getShellFromJSON((JSONObject) shell));
+                    loops += 1;
+                }
                 settings.register();
             }
         }
+    }
+
+    public static void setGroundVehicleData(GroundVehicleSettings vehicle, JSONObject obj){
+        vehicle.setVehicleData(
+                obj.getDouble("acceleration"),
+                obj.getDouble("brakeForce"),
+                obj.getFloat("turnSpeed"),
+                obj.getDouble("turnDeaccel"),
+                obj.getDouble("maxSpeed"),
+                obj.getDouble("drag"),
+                obj.getDouble("reverseAccel"),
+                obj.getDouble("reverseMax"),
+                GroundVehicle.SteerType.valueOf(obj.getString("steerType")),
+                Traversable.valueOf(obj.getString("traversable"))
+        );
+        vehicle.setSeatPos(vectorFromJson(obj.getJSONArray("seatPos")));
+        vehicle.setFuelData(
+                obj.getFloat("startFuel"),
+                obj.getFloat("fuelConsumptionRate"),
+                obj.getFloat("idleFuelConsumption"),
+                obj.getFloat("maxFuel"),
+                obj.getFloat("fuelLeakAmount")
+        );
+        vehicle.setSize(obj.getFloat("width"), obj.getFloat("length"));
+        vehicle.setDamageModel(modelFromJSON(obj.getJSONObject("model")));
     }
 
     public static Shell getShellFromJSON(JSONObject obj){
@@ -179,7 +243,7 @@ public class VehicleLoaderJSON {
         DamageModel out;
         if (modelJSON.has("upperHalf")) {
             out = new DamageModel(rectFromJSON(modelJSON.getJSONArray("lowerHalf")),
-                    rectFromJSON(modelJSON.getJSONArray("upperhalf")),
+                    rectFromJSON(modelJSON.getJSONArray("upperHalf")),
                     modelJSON.getFloat("collision")
             );
         } else {

@@ -96,7 +96,7 @@ public class Updates {
 
                 for (int i = 0; i < Math.floor(shell.power); i++) {
                     if (vehicle.getDamageModel().isInBoundingBox(shell.prevLoc.clone().add(shell.loc.clone().subtract(shell.prevLoc).multiply(i/10f)), vehicle.getLoc())){
-                        shell.loc = shell.prevLoc.clone().add(shell.loc.clone().subtract(shell.prevLoc).multiply(i/10f));
+                        shell.loc = shell.prevLoc.clone().add(shell.loc.clone().subtract(shell.prevLoc).multiply(i/shell.power));
                         return true;
                     }
                 }

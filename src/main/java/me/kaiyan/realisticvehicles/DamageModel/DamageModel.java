@@ -14,10 +14,7 @@ import org.bukkit.util.Vector;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class DamageModel implements Cloneable{
     private List<ArmourPlate> armour;
@@ -84,7 +81,7 @@ public class DamageModel implements Cloneable{
             loops++;
         }
     }
-    public static final int maxLoops = 80;
+    public static final int MAXLOOPS = 400;
     public ImpactOutData shellImpact(Shell shell, Location centerloc, Location shellloc, float vehicleyaw, float turretyaw, float yaw, float pitch, World world, int override, boolean sendResult, Player player){
         return shellImpact(shell, centerloc.getX(), centerloc.getY(), centerloc.getZ(), shellloc.getX(), shellloc.getY(), shellloc.getZ(), vehicleyaw, turretyaw, yaw, pitch, world, override, sendResult, player);
     }
@@ -159,12 +156,14 @@ public class DamageModel implements Cloneable{
 
         boolean penningArmor = false;
         boolean pennedArmour = false;
-        boolean hitComponent = false;
-        boolean destroyComponent = false;
+        Set<Component> hitComponents = new HashSet<>();
+        Set<Component> destroyedComponents = new HashSet<>();
         boolean heatFired = false;
+
         int finLoops = 0;
+        List<ArmourPlate> hitArmour = new ArrayList<>();
         //START
-        for (int loops = 0; loops < maxLoops; loops++) {
+        for (int loops = 0; loops < MAXLOOPS; loops++) {
             boolean hitPlate = false;
             VectorD point = modCoords.add(castBy);
             RealisticVehicles.debugLog("Shell: "+point);
@@ -182,6 +181,7 @@ public class DamageModel implements Cloneable{
             for (ArmourPlate plate : armour){
                 if (plate.isPointInsideBox(point.x, point.y, point.z)){
                     RealisticVehicles.debugLog("Hit Plate");
+                    hitArmour.add(plate);
                     penningArmor = true;
                     hitPlate = true;
                     world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 2f, 0.65f);
@@ -242,7 +242,7 @@ public class DamageModel implements Cloneable{
                 pennedArmour = true;
                 world.playSound(loc.toLocation(world), Sound.ENTITY_ITEM_BREAK, 2f, 0.8f);
                 if (!heatFired && shell.heat){
-                    loops = maxLoops-10;
+                    loops = MAXLOOPS -10;
                     heatFired = true;
                     RealisticVehicles.debugLog("FIRED");
                     world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 2f, 0.6f);
@@ -262,12 +262,13 @@ public class DamageModel implements Cloneable{
                         comp.health -= shell.shellDamage/2;
                     }
                     shell.shellDamage *= 0.75;
-                    hitComponent = true;
+                    hitComponents.add(comp);
                     if (comp.health <= 0){
+                        comp.health = 0;
                         RealisticVehicles.debugLog("Component Destroyed.");
                         world.playSound(loc.toLocation(world), Sound.ENTITY_GENERIC_EXPLODE, 2f, 2f);
                         comp.destroyed = true;
-                        destroyComponent = true;
+                        destroyedComponents.add(comp);
                         if (comp.destroys && comp.isAmmo){
                             data.setDestroyedIndex(components.indexOf(comp));
                             return data;
@@ -292,19 +293,6 @@ public class DamageModel implements Cloneable{
                     return shellImpact(shell, x, y, z, vx, vy, vz, vehicleyaw, turretyaw, yaw, pitch, world, 1, true, player);
                 }
             }
-
-            /*
-            Color color;
-            if (i == 0){
-                color = Color.GREEN;
-            } else if (i == maxLoops-1){
-                color = Color.RED;
-            } else {
-                color = Color.AQUA;
-            }
-            world.spawnParticle(Particle.REDSTONE, new Location(world,point.x+x, point.y+y, point.z+z), 0, new Particle.DustOptions(color, 2));
-            */
-
             if (penningArmor && !pennedArmour){
                 //First Strike Effects
                 RealisticVehicles.debugLog("Striked!");
@@ -341,10 +329,20 @@ public class DamageModel implements Cloneable{
         } else {
             player.sendMessage(ChatColor.RED+"Non Penetration.");
         }
-        if (hitComponent){
-            player.sendMessage(ChatColor.GREEN+"Hit A Component!");
-            if (destroyComponent){
-                player.sendMessage(ChatColor.GREEN+"Destroyed A Component!");
+        if (hitComponents.size() != 0){
+            StringBuilder str = new StringBuilder("[");
+            for (Component comp : hitComponents){
+                str.append(",").append(comp.type);
+            }
+            str.append("]");
+            player.sendMessage(ChatColor.GREEN+"Hit Components: "+ str);
+            if (destroyedComponents.size() != 0){
+                StringBuilder str2 = new StringBuilder("[");
+                for (Component comp : destroyedComponents){
+                    str2.append(",").append(comp.type);
+                }
+                str2.append("]");
+                player.sendMessage(ChatColor.GREEN+"Destroyed Components: "+str2);
             }
         } else {
             player.sendMessage(ChatColor.RED+"No Damage");

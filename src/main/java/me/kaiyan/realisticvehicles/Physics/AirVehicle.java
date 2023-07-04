@@ -219,10 +219,11 @@ public class AirVehicle{
             moveBy.rotateAroundX(Math.toRadians(pitch));
             moveBy.rotateAroundY(-Math.toRadians(yaw));
             moveBy.multiply(getSpeed());
-            float yFall = (float) (1f-((getSpeed()/settings.getLiftSpeed()*0.6)));
-            RealisticVehicles.debugLog(yFall);
+            float yFall = (float) (1f-((getSpeed()/settings.getLiftSpeed())));
+            //RealisticVehicles.debugLog(yFall);
+            //RealisticVehicles.debugLog("Wing Damage"+damageModel.getComponentDamagePercent(ComponentType.WING));
             yFall *= damageModel.getComponentDamagePercent(ComponentType.WING);
-            yFall = Math.max(-0.25f, yFall);
+            yFall = Math.max(-0.5f, yFall);
 
             moveBy.subtract(new Vector(0, yFall, 0));
 
@@ -258,8 +259,9 @@ public class AirVehicle{
         if (!collided) {
             addSpeed((pitch / 90) * 0.25);
 
-            float yFall = (float) (0.75f-((getSpeed()/settings.getLiftSpeed()*0.6)));
-            yFall /= damageModel.getComponentDamagePercent(ComponentType.WING);
+            float yFall = (float) (1f-((getSpeed()/settings.getLiftSpeed()*0.6)));
+            RealisticVehicles.debugLog("Wing Damage: "+damageModel.getComponentDamagePercent(ComponentType.WING));
+            yFall *= damageModel.getComponentDamagePercent(ComponentType.WING);
 
             if (getSpeed() < settings.getStallSpeed() && pitch < 80) {
                 yFall *= 1.25;
@@ -319,7 +321,7 @@ public class AirVehicle{
                         }
                     }
                 }
-                RealisticVehicles.debugLog(damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR));
+                //RealisticVehicles.debugLog(damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR));
                 if (damageModel.getComponentActivePercent(ComponentType.LANDINGGEAR) <= 0 && !invulnerable){
                     startCrashing();
                 }

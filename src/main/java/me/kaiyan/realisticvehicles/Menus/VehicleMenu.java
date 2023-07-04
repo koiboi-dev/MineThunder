@@ -25,6 +25,7 @@ import org.ipvp.canvas.slot.ClickOptions;
 import org.ipvp.canvas.slot.Slot;
 import org.ipvp.canvas.type.ChestMenu;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 

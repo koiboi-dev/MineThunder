@@ -2,6 +2,7 @@ package me.kaiyan.realisticvehicles.VehicleManagers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.sun.jna.platform.win32.VersionHelpers;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.DataTypes.Exceptions.InvalidTypeException;
 import me.kaiyan.realisticvehicles.DataTypes.FuelType;
@@ -12,10 +13,13 @@ import me.kaiyan.realisticvehicles.Vehicles.Car;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
 import org.bukkit.Location;
+import org.bukkit.persistence.PersistentDataType;
 
+import java.io.*;
+import java.util.Objects;
 import java.util.UUID;
 
-public class VehicleSaver {
+public class VehicleSaver implements Serializable {
     private final String type;
     private final VehicleType vType;
     private final String savedFuelType;
@@ -120,6 +124,20 @@ public class VehicleSaver {
 
     public static VehicleSaver fromJson(String json){
         return new Gson().fromJson(json, VehicleSaver.class);
+    }
+
+    public byte[] toBytes() throws IOException {
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+        oos.writeObject(this);
+        oos.flush();
+        return bos.toByteArray();
+    }
+
+    public static VehicleSaver fromBytes(byte[] bytes) throws IOException, ClassNotFoundException {
+        ByteArrayInputStream bis = new ByteArrayInputStream(bytes);
+        ObjectInputStream ois = new ObjectInputStream(bis);
+        return (VehicleSaver) ois.readObject();
     }
 
     public String getUuid() {

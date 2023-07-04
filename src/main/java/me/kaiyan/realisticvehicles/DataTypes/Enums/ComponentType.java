@@ -13,5 +13,5 @@ public enum ComponentType {
     ELEVATOR,
     RUDDER,
     LANDINGGEAR,
-    TRACKS
+    TRACK
 }

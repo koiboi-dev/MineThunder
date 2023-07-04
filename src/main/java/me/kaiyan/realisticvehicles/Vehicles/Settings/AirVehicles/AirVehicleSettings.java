@@ -175,22 +175,8 @@ public class AirVehicleSettings extends VehicleSettings {
         return missiles;
     }
 
-    public void setRadar(int scanAngle, float scanDistance){
-        this.scanAngle = scanAngle;
-        this.scanDistance = scanDistance;
-        hasRadar = true;
-    }
-
     public boolean hasRadar() {
         return hasRadar;
-    }
-
-    public int getScanAngle() {
-        return scanAngle;
-    }
-
-    public float getScanDistance() {
-        return scanDistance;
     }
 
     public void addMissile(MissileSettings settings){

@@ -13,6 +13,7 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import me.kaiyan.realisticvehicles.Models.ParticleModel;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
+import me.kaiyan.realisticvehicles.Physics.GroundVehicleRevised;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
@@ -40,7 +41,7 @@ import java.util.*;
 
 import static me.kaiyan.realisticvehicles.RealisticVehicles.SCRAPKEY;
 
-public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
+public class Tank extends GroundVehicleRevised implements FixedUpdate, VehicleInterface, Sleepable {
     private final DamageModel damageModel;
     private Entity baseEntity;
     private Entity turretEnt;

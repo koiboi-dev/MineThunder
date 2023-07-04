@@ -65,7 +65,9 @@ public class TankSettings extends GroundVehicleSettings{
         this.gunRecoilCooldown = gunRecoilCooldown;
         this.gunRecoilSetback = gunRecoilSetback;
     }
-
+    public void setShellData(int index, Shell shell){
+        shells[index] = shell;
+    }
     public void setShellData(@Nonnull Shell fshell, @Nullable Shell sshell, @Nullable Shell tshell){
         shells[0] = fshell;
         shells[1] = sshell;

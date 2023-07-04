@@ -29,6 +29,7 @@ import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class TestCommands implements CommandExecutor {
 
@@ -94,7 +95,7 @@ public class TestCommands implements CommandExecutor {
                 }
                 case "truck" -> {
                     Player player = (Player) commandSender;
-                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking S3-X Truck", VehicleType.CAR));
+                    player.getInventory().addItem(ItemGenerator.generateNewVehicleItem("Bessie Trucking S2-X Truck", VehicleType.CAR));
                 }
                 case "trailer" -> {
                     Player player = (Player) commandSender;
@@ -108,25 +109,34 @@ public class TestCommands implements CommandExecutor {
                     Player player = (Player) commandSender;
                     PurchaseMenu.openPurchaseMenu(player);
                 }
+                default -> basicCommands(commandSender, strings);
             }
         } else {
             if (strings.length == 0){
                 sendHelpMsg((Player) commandSender);
                 return false;
             }
-            switch (strings[0]) {
-                case "shop" -> {
-                    Player player = (Player) commandSender;
-                    PurchaseMenu.openPurchaseMenu(player);
-                }
-                case "crowbar" -> {
-                    Player player = (Player) commandSender;
-                    player.getInventory().addItem(ItemGenerator.getCrowbar());
-                }
-                case "help" -> sendHelpMsg((Player) commandSender);
-            }
+            basicCommands(commandSender, strings);
         }
         return false;
+    }
+
+    public void basicCommands(CommandSender commandSender, String[] strings){
+        switch (strings[0]) {
+            case "shop" -> {
+                Player player = (Player) commandSender;
+                PurchaseMenu.openPurchaseMenu(player);
+            }
+            case "crowbar" -> {
+                Player player = (Player) commandSender;
+                player.getInventory().addItem(ItemGenerator.getCrowbar());
+            }
+            case "help" -> sendHelpMsg((Player) commandSender);
+            case "resource" -> {
+                RealisticVehicles.debugLog("Loaded Player: "+ Objects.requireNonNull(RealisticVehicles.getInstance().getConfig().getString("resource-pack")));
+                ((Player)commandSender).setResourcePack(Objects.requireNonNull(RealisticVehicles.getInstance().getConfig().getString("resource-pack")));
+            }
+        }
     }
 
     public void sendHelpMsg(Player player){
