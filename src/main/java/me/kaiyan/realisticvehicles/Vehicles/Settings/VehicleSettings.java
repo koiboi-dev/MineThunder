@@ -25,13 +25,15 @@ public class VehicleSettings {
     private double width = 1;
     private double length = 1;
     private final String shopGroup;
+    private final Vector scale;
 
-    public VehicleSettings(String type, int textureID, VehicleType vtype, float price, String shopGroup) {
+    public VehicleSettings(String type, int textureID, VehicleType vtype, float price, String shopGroup, Vector scale) {
         this.type = type;
         this.textureID = textureID;
         this.vtype = vtype;
         this.price = price;
         this.shopGroup = shopGroup;
+        this.scale = scale;
     }
 
     public String getType() {
@@ -164,5 +166,9 @@ public class VehicleSettings {
 
     public String getShopGroup() {
         return shopGroup;
+    }
+
+    public Vector getScale() {
+        return scale;
     }
 }

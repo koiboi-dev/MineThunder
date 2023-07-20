@@ -2,6 +2,7 @@ package me.kaiyan.realisticvehicles.Vehicles.Settings.SeaVehicles;
 
 import me.kaiyan.realisticvehicles.DataTypes.Enums.VehicleType;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
+import org.bukkit.util.Vector;
 
 public class ShipSettings extends VehicleSettings {
     private float acceleration;
@@ -13,7 +14,7 @@ public class ShipSettings extends VehicleSettings {
     private float width;
 
     public ShipSettings(String type, int textureID, VehicleType vtype, float price, String shopGroup) {
-        super(type, textureID, vtype, price, shopGroup);
+        super(type, textureID, vtype, price, shopGroup, new Vector(1, 1,1));
     }
 
     public float getAcceleration() {

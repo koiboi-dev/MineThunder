@@ -3,7 +3,6 @@ package me.kaiyan.realisticvehicles.Vehicles;
 import me.kaiyan.realisticvehicles.DamageModel.Hitboxes.Component;
 import me.kaiyan.realisticvehicles.DataTypes.Interfaces.FixedUpdate;
 import me.kaiyan.realisticvehicles.Counters.Updates;
-import me.kaiyan.realisticvehicles.DamageModel.DamageModel;
 import me.kaiyan.realisticvehicles.DamageModel.Projectiles.Shell;
 import me.kaiyan.realisticvehicles.DataTypes.*;
 import me.kaiyan.realisticvehicles.DataTypes.Enums.ComponentType;
@@ -15,14 +14,12 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.Physics.AirVehicle;
-import me.kaiyan.realisticvehicles.Physics.Missile;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.AirVehicles.AirVehicleSettings;
 import net.md_5.bungee.api.ChatMessageType;
 import net.md_5.bungee.api.chat.ComponentBuilder;
-import net.minecraft.util.Tuple;
 import org.bukkit.*;
 import org.bukkit.entity.*;
 import org.bukkit.event.inventory.InventoryType;
@@ -61,12 +58,9 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
 
         assert world != null;
         //this.baseEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID());
-        seatEnt = RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), VehicleType.AIR);
+        seatEnt = RealisticVehicles.setSeat((Interaction) world.spawnEntity(loc, EntityType.INTERACTION), VehicleType.AIR);
 
-        model = new Model((ArmorStand) seatEnt, settings.getSeatPos(), getSettings().getMidOffset(), settings.isShiftGrid(),false);
-        for (Map.Entry<int[], Tuple<Integer, Integer>> entry : settings.getModels().entrySet()){
-            model.addCorner(entry.getKey(), (ArmorStand) RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), entry.getValue().a(), entry.getValue().b()));
-        }
+        model = new Model((Interaction) seatEnt, settings.getSeatPos(), RealisticVehicles.setTexture((ItemDisplay) loc.getWorld().spawnEntity(loc, EntityType.ITEM_DISPLAY), getSettings().getTextureID(), getSettings().getTextureID()+1), true, getSettings().getScale());
 
         //baseEnt.setRotation(0, 0);
         seatEnt.setRotation(0, 0);
@@ -510,8 +504,8 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
     }
 
     @Override
-    public boolean hasArmourStand(ArmorStand stand) {
-        return model.containsStand(stand);
+    public boolean containsSeat(Entity stand) {
+        return model.containsSeat(stand);
     }
 
     public int getBullets() {
@@ -539,7 +533,7 @@ public class Aircraft extends AirVehicle implements VehicleInterface, FixedUpdat
             seatEnt.eject();
             seatedPlayer.getInventory().setContents(playerInv);
         }
-        model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
+        model.sleep(new VehicleSaver(this));
         closeThis(0);
     }
 }

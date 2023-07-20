@@ -28,6 +28,7 @@ public class VehicleSaver implements Serializable {
     private final SavedDamage damageModel;
     private final SavedMissiles missiles;
     private final String uuid;
+    private final float yaw;
 
     public VehicleSaver(VehicleInterface inter){
         type = inter.getNameType();
@@ -37,6 +38,7 @@ public class VehicleSaver implements Serializable {
         savedShells = inter.getShellsAmmo();
         damageModel = new SavedDamage(inter.getDamageModel());
         uuid = UUID.randomUUID().toString();
+        yaw = inter.getVehicleYaw();
         if (inter.getMissileHolder() != null) {
             missiles = new SavedMissiles(inter.getMissileHolder());
         } else {
@@ -57,6 +59,7 @@ public class VehicleSaver implements Serializable {
                 if (craft.getMissileHolder() != null) {
                     missiles.updateMissileHolder(craft.getMissileHolder(), loc);
                 }
+                craft.setYaw(yaw);
                 return craft;
             } catch (InvalidTypeException e) {
                 RealisticVehicles.getInstance().getLogger().severe("UNKNOWN AIRCRAFT "+type+" WHEN PLACING NEW CRAFT!");
@@ -73,6 +76,7 @@ public class VehicleSaver implements Serializable {
                 if (craft.getMissileHolder() != null) {
                     missiles.updateMissileHolder(craft.getMissileHolder(), loc);
                 }
+                craft.setYaw(yaw);
                 return craft;
             } catch (InvalidTypeException e) {
                 RealisticVehicles.getInstance().getLogger().severe("UNKNOWN TANK "+type+" WHEN PLACING NEW CRAFT!");
@@ -85,6 +89,7 @@ public class VehicleSaver implements Serializable {
             if (craft.getMissileHolder() != null) {
                 missiles.updateMissileHolder(craft.getMissileHolder(), loc);
             }
+            craft.setYaw(yaw);
             return craft;
         }
         return null;
@@ -142,5 +147,9 @@ public class VehicleSaver implements Serializable {
 
     public String getUuid() {
         return uuid;
+    }
+
+    public float getYaw() {
+        return yaw;
     }
 }

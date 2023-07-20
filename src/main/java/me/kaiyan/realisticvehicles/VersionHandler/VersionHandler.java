@@ -14,9 +14,7 @@ public class VersionHandler {
         version = RealisticVehicles.getInstance().getServer().getClass().getPackage().getName().split("\\.")[3];
         RealisticVehicles.debugLog("Version: "+version);
         switch (version){
-            case "v1_18_R2" -> tele = new Version_1_18();
-            case "v1_19_R1" -> tele = new Version_1_19();
-            case "v1_19_R2" -> tele = new Version_1_20_1();
+            case "v1_20_R1" -> tele = new Version_1_20_1();
             default -> {
                 RealisticVehicles.getStaticLogger().severe("UNABLE TO LAUNCH REALISTIC VEHICLES, UNSUPPORTED MC VERSION");
                 RealisticVehicles.getInstance().getServer().getPluginManager().disablePlugin(RealisticVehicles.getInstance());

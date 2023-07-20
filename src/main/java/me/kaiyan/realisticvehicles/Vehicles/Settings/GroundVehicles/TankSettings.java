@@ -39,8 +39,8 @@ public class TankSettings extends GroundVehicleSettings{
      *                  turret: texID+1
      *                  gun: texID+2
      */
-    public TankSettings(String type, int textureID, float price, String shopGroup){
-        super(type, VehicleType.TANK,textureID, price, shopGroup);
+    public TankSettings(String type, int textureID, float price, String shopGroup, Vector scale){
+        super(type, VehicleType.TANK,textureID, price, shopGroup, scale);
     }
 
     /**

@@ -8,6 +8,7 @@
   "seatRaisedPos": [-0.85, 0.4, -0.2],
   "gunBarrelPos": [0, 1.5, 3.5],
   "machineGunPos": [0.5, 1.5, 2],
+  "scale": [1 ,1, 1],
   "shells": [
     {
       "penScore": 70,

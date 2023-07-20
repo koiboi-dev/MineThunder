@@ -1,5 +1,6 @@
 package me.kaiyan.realisticvehicles.VersionHandler.Version;
 
+import org.bukkit.craftbukkit.v1_20_R1.entity.CraftEntity;
 import org.bukkit.craftbukkit.v1_20_R1.entity.CraftLivingEntity;
 import org.bukkit.entity.Entity;
 import org.bukkit.util.Vector;
@@ -12,7 +13,7 @@ public class Version_1_20_1 implements Version{
             stand.teleport(loc.toLocation(stand.getWorld()));
             stand.setRotation(yaw, pitch);
         } else {
-            ((CraftLivingEntity) stand).getHandle().b(loc.getX(), loc.getY(), loc.getZ(), yaw, pitch);
+            ((CraftEntity) stand).getHandle().b(loc.getX(), loc.getY(), loc.getZ(), yaw, pitch);
         }
     }
 }

@@ -24,8 +24,8 @@ public class HelicopterSettings extends VehicleSettings {
     private final float midOffset;
     private final boolean shiftGrid;
 
-    public HelicopterSettings(String type, int textureID, VehicleType vtype, float price, float midOffset, boolean shiftGrid, String shopGroup) {
-        super(type, textureID, vtype, price, shopGroup);
+    public HelicopterSettings(String type, int textureID, VehicleType vtype, float price, float midOffset, boolean shiftGrid, String shopGroup, Vector scale) {
+        super(type, textureID, vtype, price, shopGroup, scale);
         this.midOffset = midOffset;
         this.shiftGrid = shiftGrid;
     }

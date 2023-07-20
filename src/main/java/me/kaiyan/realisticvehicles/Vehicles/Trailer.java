@@ -12,10 +12,7 @@ import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
 import org.bukkit.*;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.EntityType;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.util.Vector;
 
@@ -39,10 +36,7 @@ public class Trailer implements FixedUpdate, Sleepable {
 
     public Trailer(Location loc, TrailerSettings settings) {
         this.loc = loc;
-        model = new Model(null, new Vector(), 0, true);
-        for (Map.Entry<int[], Integer> entry : settings.getModels().entrySet()){
-            model.addCorner(entry.getKey(), (ArmorStand) RealisticVehicles.setTexture((LivingEntity) loc.getWorld().spawnEntity(loc, EntityType.ARMOR_STAND), entry.getValue(), entry.getValue()));
-        }
+        model = new Model(null, new Vector(), RealisticVehicles.setTexture((ItemDisplay) loc.getWorld().spawnEntity(loc, EntityType.ITEM_DISPLAY), settings.getDisplayID(), settings.getDisplayID()), true, new Vector(1, 1, 1));
         this.settings = settings;
         int invs = (int) Math.ceil(settings.getMaxItems()/54f);
         inventory = new Inventory[invs];
@@ -168,14 +162,6 @@ public class Trailer implements FixedUpdate, Sleepable {
     public TrailerSettings getSettings() {
         return settings;
     }
-
-    public boolean hasArmourStand(ArmorStand stand) {
-        return model.containsStand(stand);
-    }
-
-
-
-
     int sleepTicks;
     @Override
     public int getTicksSinceLastWake() {
@@ -189,8 +175,7 @@ public class Trailer implements FixedUpdate, Sleepable {
 
     @Override
     public void sleep() {
-        String key = null;
-        model.sleepStands(VehicleType.TRAILER, getSettings().getName(), yaw, key);
+
     }
 
     public void setYaw(float yaw) {

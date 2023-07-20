@@ -13,7 +13,6 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import me.kaiyan.realisticvehicles.Models.ParticleModel;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
-import me.kaiyan.realisticvehicles.Physics.GroundVehicleRevised;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
@@ -33,7 +32,6 @@ import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.scheduler.BukkitRunnable;
-import org.bukkit.util.EulerAngle;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
@@ -41,12 +39,12 @@ import java.util.*;
 
 import static me.kaiyan.realisticvehicles.RealisticVehicles.SCRAPKEY;
 
-public class Tank extends GroundVehicleRevised implements FixedUpdate, VehicleInterface, Sleepable {
+public class Tank extends GroundVehicle implements FixedUpdate, VehicleInterface, Sleepable {
     private final DamageModel damageModel;
     private Entity baseEntity;
     private Entity turretEnt;
     private Entity gunEnt;
-    private Entity driverSeat;
+    private Interaction driverSeat;
 
     private final String type;
     private float turretYaw = 0;
@@ -89,15 +87,15 @@ public class Tank extends GroundVehicleRevised implements FixedUpdate, VehicleIn
             this.seatPos = settings.getSeatPos();
             this.seatRaisedPos = settings.getSeatRaisedPos();
 
-            baseEntity = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID(), settings.getTextureID());
-            turretEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 1, settings.getTextureID() + 1);
-            gunEnt = RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), settings.getTextureID() + 2, settings.getTextureID() + 2);
+            baseEntity = RealisticVehicles.setTexture((ItemDisplay) world.spawnEntity(loc, EntityType.ITEM_DISPLAY), settings.getTextureID(), settings.getTextureID());
+            turretEnt = RealisticVehicles.setTexture((ItemDisplay) world.spawnEntity(loc, EntityType.ITEM_DISPLAY), settings.getTextureID() + 1, settings.getTextureID() + 1);
+            gunEnt = RealisticVehicles.setTexture((ItemDisplay) world.spawnEntity(loc, EntityType.ITEM_DISPLAY), settings.getTextureID() + 2, settings.getTextureID() + 2);
 
             Vector vec = seatRaisedPos.clone();
             vec.rotateAroundY(-Math.toRadians(turretYaw));
             vec.add(loc.toVector());
 
-            driverSeat = RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(vec.toLocation(world), EntityType.ARMOR_STAND), VehicleType.TANK);
+            driverSeat = (Interaction) RealisticVehicles.setSeat((Interaction) world.spawnEntity(vec.toLocation(world), EntityType.INTERACTION), VehicleType.TANK);
 
             this.type = type;
 
@@ -266,7 +264,7 @@ public class Tank extends GroundVehicleRevised implements FixedUpdate, VehicleIn
         }
 
         //((CraftArmorStand) gunEnt).getHandle().setHeadPose(new Vector3f((float) Math.toRadians(turretPitch), 0, 0));
-        ((ArmorStand) gunEnt).setHeadPose(new EulerAngle(Math.toRadians(turretPitch), 0, 0));
+        //((ArmorStand) gunEnt).setHeadPose(new EulerAngle(Math.toRadians(turretPitch), 0, 0));
 
         //baseEntity.teleport(loc)
         VersionHandler.teleport(baseEntity, getLoc().toVector(), (float) getYaw(), 0);
@@ -802,25 +800,5 @@ public class Tank extends GroundVehicleRevised implements FixedUpdate, VehicleIn
         baseEntity.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";base;"+getVehicleYaw());
         driverSeat.getPersistentDataContainer().set(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING, id+";"+getType()+";"+new VehicleSaver(this).toJson()+";seat;"+getVehicleYaw());
         closeThis(0);
-    }
-
-    public void resetModels(ArmorStand seatEnt, ArmorStand baseStand, ArmorStand gunStand, ArmorStand turretStand){
-        if (seatEnt != null) {
-            driverSeat.remove();
-            this.driverSeat = seatEnt;
-            updateSeat(seatEnt);
-        }
-        if (baseStand != null) {
-            baseEntity.remove();
-            this.baseEntity = baseStand;
-        }
-        if (gunStand != null) {
-            gunEnt.remove();
-            this.gunEnt = gunStand;
-        }
-        if (turretStand != null) {
-            turretEnt.remove();
-            this.turretEnt = turretStand;
-        }
     }
 }

@@ -47,7 +47,7 @@ public class TestCommands implements CommandExecutor {
                 case "flash" -> RealisticVehicles.flashing = !RealisticVehicles.flashing;
                 case "plane" -> {
                     try {
-                        new Aircraft(((Player) commandSender).getLocation(), "MIG 31");
+                        new Aircraft(((Player) commandSender).getLocation(), "MIG 32");
                     } catch (InvalidTypeException e) {
                         e.printStackTrace();
                     }

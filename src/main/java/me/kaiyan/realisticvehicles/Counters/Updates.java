@@ -10,6 +10,8 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.Physics.ProjectileShell;
 import me.kaiyan.realisticvehicles.RealisticVehicles;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Interaction;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.util.Vector;
 
@@ -159,10 +161,10 @@ public class Updates {
         }
     }*/
 
-    public static VehicleInterface getVehicleFromStand(ArmorStand seatEnt){
+    public static VehicleInterface getVehicleFromStand(Interaction seatEnt){
         for (FixedUpdate update : fixedUpdates){
             if (update instanceof VehicleInterface inter){
-                if (inter.getBaseSeat().getUniqueId() == seatEnt.getUniqueId() || inter.hasArmourStand(seatEnt)){
+                if (inter.getBaseSeat().getUniqueId() == seatEnt.getUniqueId() || inter.containsSeat(seatEnt)){
                     return inter;
                 }
             }

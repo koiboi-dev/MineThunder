@@ -15,6 +15,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.craftbukkit.v1_20_R1.CraftWorld;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -30,10 +31,33 @@ import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
+import java.io.IOException;
 import java.util.*;
 
 public class EventListener implements Listener {
     public static final NamespacedKey vehicleType = new NamespacedKey(RealisticVehicles.getInstance(), "vehicleTypes");
+
+    public void attemptToWakeVehicle(Entity ent){
+        ItemDisplay disp;
+        if (ent.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
+            disp = (ItemDisplay) ((CraftWorld) ent.getWorld()).getHandle().a(UUID.fromString(ent.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)));
+        } else if (ent.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.BYTE_ARRAY)){
+            disp = (ItemDisplay) ent;
+        } else {
+            return;
+        }
+        String uuid = disp.getUniqueId().toString();
+        for (Entity en : ent.getWorld().getEntities()){
+            if (en instanceof Interaction && en.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING) && Objects.equals(en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING), uuid)) {
+                en.remove();
+            }
+        }
+        try {
+            VehicleSaver.fromBytes(disp.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.BYTE_ARRAY)).createCraft(ent.getLocation());
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerInteractEntity(PlayerInteractAtEntityEvent event){
@@ -41,117 +65,9 @@ public class EventListener implements Listener {
 
         Entity en = event.getRightClicked();
 
-        if (en.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
-            //RealisticVehicles.debugLog("Sleep Key'd");
-            String[] info = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-            //RealisticVehicles.debugLog(info[0]);
-            switch (VehicleType.valueOf(info[1])){
-                case CAR -> {
-                    RealisticVehicles.debugLog("Car");
-                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
-                    ArmorStand seat = null;
-                    HashMap<int[], ArmorStand> stands = new HashMap<>();
-                    Location loc = en.getLocation().clone();
-                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
-                        if (ent instanceof ArmorStand stand){
-                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
-                                String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-                                RealisticVehicles.debugLog(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[1]);
-                                if (!Objects.equals(sinfo[0], info[0])){
-                                    continue;
-                                }
-                                stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
-                                stand.remove();
-                                /*if (sinfo[6].equals("1")){
-                                    if (stand.getUniqueId().equals(en.getUniqueId()))
-                                        loc.subtract(new Vector(Float.parseFloat(sinfo[4]), 0, Float.parseFloat(sinfo[5])));
-                                    seat = stand;
-                                    continue;
-                                } else if (stand.getUniqueId().equals(en.getUniqueId())){
-                                    loc.subtract(new Vector(Integer.parseInt(sinfo[4]), 0, Integer.parseInt(sinfo[5])).multiply(Model.GRID_OFFSET));
-                                }
-                                stands.put(new int[] {Integer.parseInt(sinfo[4]), Integer.parseInt(sinfo[5])}, stand);*/
-                            }
-                        }
-                    }
-                    Car car = (Car) VehicleSaver.fromJson(info[3].split("@")[0]).createCraft(loc);
-                    //car.resetModels(seat);
-                    car.setYaw(Float.parseFloat(info[7]));
-                    car.getBaseSeat().addPassenger(event.getPlayer());
-                }
-                case TANK -> {
-                    // 0  ; 1           ; 2                                 ; 3  ; 4
-                    //id+";"+getType()+";"+new VehicleSaver(this).toJson()+";seat;"+getVehicleYaw()
-                    ArmorStand seat = null;
-                    ArmorStand turret = null;
-                    ArmorStand gun = null;
-                    ArmorStand base = null;
-                    Location loc = en.getLocation().clone();
-                    boolean enIsSeat = false;
-                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
-                        if (ent instanceof ArmorStand stand){
-                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)) {
-                                String data = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING);
-                                stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
-                                if (Objects.equals(data.split(";")[0], info[0])) {
-                                    if (data.contains("gun")) gun = stand;
-                                    else if (data.contains("turret")) turret = stand;
-                                    else if (data.contains("base")) base = stand;
-                                    else if (data.contains("seat")) {
-                                        seat = stand;
-                                        enIsSeat = en.getUniqueId() == stand.getUniqueId();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    Tank tank = (Tank) VehicleSaver.fromJson(info[2]).createCraft(loc);
-                    tank.resetModels(seat, base, gun, turret);
-                    if (enIsSeat){
-                        loc.subtract(tank.getSeatPos());
-                    }
-                    tank.setLoc(loc);
-                    tank.setYaw(Float.parseFloat(info[4]));
-                    tank.getBaseSeat().addPassenger(event.getPlayer());
-                }
-                case AIR -> {
-                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
-                    //ArmorStand seat = null;
-                    //HashMap<int[], ArmorStand> stands = new HashMap<>();
-                    Location loc = en.getLocation().clone();
-                    for (Entity ent : event.getPlayer().getWorld().getEntities()){
-                        if (ent instanceof ArmorStand stand){
-                            if (stand.getPersistentDataContainer().has(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING)){
-                                String[] sinfo = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-                                RealisticVehicles.debugLog(sinfo[0]+" : "+sinfo[1]+" : "+sinfo[2]);
-                                if (!Objects.equals(sinfo[0], info[0])){
-                                    continue;
-                                }
-                                //stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
-                                stand.remove();
-                                /*if (sinfo[6].equals("1")){
-                                    if (stand.getUniqueId().equals(en.getUniqueId()))
-                                        loc.subtract(new Vector(Float.parseFloat(sinfo[4]), 0, Float.parseFloat(sinfo[5])));
-                                    seat = stand;
-                                    continue;
-                                } else if (stand.getUniqueId().equals(en.getUniqueId())){
-                                    loc.subtract(new Vector(Integer.parseInt(sinfo[4]), 0, Integer.parseInt(sinfo[5])).multiply(Model.GRID_OFFSET));
-                                }
-                                stands.put(new int[] {Integer.parseInt(sinfo[4]), Integer.parseInt(sinfo[5])}, stand);*/
-                            }
-                        }
-                    }
-                    Aircraft plane = (Aircraft) VehicleSaver.fromJson(info[3]).createCraft(loc.clone().add(new Vector(0, 1, 0)));
-                    plane.setYaw(Float.parseFloat(info[7]));
-                    //plane.getLoc().add(new Vector(0, 0.5, 0));
-                    plane.getBaseSeat().addPassenger(event.getPlayer());
-                }
-            }
-        }
+        attemptToWakeVehicle(en);
 
-        if (en.getPersistentDataContainer().has(vehicleType, PersistentDataType.STRING) && en instanceof ArmorStand stand){
+        if (en.getPersistentDataContainer().has(vehicleType, PersistentDataType.STRING) && en instanceof Interaction stand){
             event.setCancelled(true);
             //String type = en.getPersistentDataContainer().get(vehicleType, PersistentDataType.STRING);
 
@@ -221,7 +137,7 @@ public class EventListener implements Listener {
 
     @EventHandler
     public void onModelDamageEvent(EntityDamageEvent event){
-        if (event.getEntity() instanceof ArmorStand stand) {
+        if (event.getEntity() instanceof Interaction stand) {
             event.setCancelled(Updates.getVehicleFromStand(stand) != null);
         }
     }

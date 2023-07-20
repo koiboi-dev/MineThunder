@@ -9,6 +9,7 @@
   "width": 1,
   "length": 3,
   "seatpos": [0 ,0, 0],
+  "scale": [1 ,1, 1],
   "startFuel": 20,
   "fuelConsumptionRate": 0.1,
   "idleFuelConsumption":  0,

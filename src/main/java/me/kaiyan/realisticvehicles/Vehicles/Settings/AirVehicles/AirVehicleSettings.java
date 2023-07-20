@@ -36,8 +36,6 @@ public class AirVehicleSettings extends VehicleSettings {
     private List<Vector> gunPositions = new ArrayList<>();
     private int fireRate;
 
-    private final HashMap<int[], Tuple<Integer, Integer>> models = new HashMap<>();
-
     private boolean hasRadar = false;
     private int scanAngle;
     private float scanDistance;
@@ -45,8 +43,8 @@ public class AirVehicleSettings extends VehicleSettings {
     private final float midOffset;
     private final boolean shiftGrid;
 
-    public AirVehicleSettings(String type, int textureID, float price, float midOffset, boolean shiftGrid, String shopGroup) {
-        super(type, textureID, VehicleType.AIR, price, shopGroup);
+    public AirVehicleSettings(String type, int textureID, float price, float midOffset, boolean shiftGrid, String shopGroup, Vector scale) {
+        super(type, textureID, VehicleType.AIR, price, shopGroup, scale);
         this.midOffset = midOffset;
         this.shiftGrid = shiftGrid;
     }
@@ -67,15 +65,6 @@ public class AirVehicleSettings extends VehicleSettings {
         this.fullPitchSpeed = fullPitchSpeed*fullPitchSpeed;
         this.maxYawSpeed = maxYawSpeed;
     }
-
-    public void addModelSegment(int[] coords, int extID, int retID){
-        models.put(coords, new Tuple<>(extID, retID));
-    }
-
-    public HashMap<int[], Tuple<Integer, Integer>> getModels() {
-        return models;
-    }
-
     public double getWeight() {
         return weight;
     }

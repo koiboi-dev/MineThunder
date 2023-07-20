@@ -51,14 +51,11 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
         damageModel = settings.getDamageModel().clone();
         fuelTank = new FuelTank(settings);
 
-        seatEnt = RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), VehicleType.CAR);
+        seatEnt = RealisticVehicles.setSeat((Interaction) world.spawnEntity(loc, EntityType.INTERACTION), VehicleType.CAR);
 
-        model = new Model((ArmorStand) seatEnt, settings.getSeatPos(), settings.getOffset(), true);
-        for (Map.Entry<int[], Integer> entry : settings.getModels().entrySet()){
-            model.addCorner(entry.getKey(), (ArmorStand) RealisticVehicles.setTexture((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), entry.getValue(), entry.getValue()));
-        }
+        model = new Model((Interaction) seatEnt, settings.getSeatPos(), RealisticVehicles.setTexture((ItemDisplay) loc.getWorld().spawnEntity(loc, EntityType.ITEM_DISPLAY), settings.getTextureID(), settings.getTextureID()+1), false, settings.getScale());
         for (Vector vec : settings.getSeats()){
-            model.addSeat(vec, (ArmorStand) RealisticVehicles.setSeat((LivingEntity) world.spawnEntity(loc, EntityType.ARMOR_STAND), VehicleType.CAR));
+            model.addSeat(vec, (Interaction) RealisticVehicles.setSeat((Interaction) world.spawnEntity(loc, EntityType.INTERACTION), VehicleType.CAR));
         }
 
         for (Tuple<Vector, TrailerTypes> vec : settings.getHitches()){
@@ -265,8 +262,8 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
         return seatEnt;
     }
     @Override
-    public boolean hasArmourStand(ArmorStand stand) {
-        return model.containsStand(stand);
+    public boolean containsSeat(Entity stand) {
+        return model.containsSeat(stand);
     }
 
     private int sleepTicks = 0;
@@ -280,13 +277,8 @@ public class Car extends GroundVehicle implements FixedUpdate, VehicleInterface,
 
     @Override
     public void sleep() {
-        if (harvester != null) {
-            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
-            closeThis(0);
-        } else {
-            model.sleepStands(getType(), getNameType(), getVehicleYaw(), new VehicleSaver(this).toJson());
-            closeThis(0);
-        }
+        model.sleep(new VehicleSaver(this));
+        closeThis(0);
     }
 
     public CarSettings getSettings(){

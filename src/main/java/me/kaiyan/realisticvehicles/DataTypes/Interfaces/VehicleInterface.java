@@ -8,9 +8,7 @@ import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.DataTypes.TrailerHitch;
 import me.kaiyan.realisticvehicles.Models.MissileHolder;
 import org.bukkit.Location;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 
 import java.util.List;
 
@@ -40,7 +38,7 @@ public interface VehicleInterface {
     List<MissileSettings> getValidMissiles();
     MissileHolder getMissileHolder();
 
-    default boolean hasArmourStand(ArmorStand stand){
+    default boolean containsSeat(Entity stand){
         return false;
     }
 

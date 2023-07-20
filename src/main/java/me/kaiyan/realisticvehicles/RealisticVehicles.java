@@ -18,7 +18,6 @@ import me.kaiyan.realisticvehicles.DataTypes.Interfaces.VehicleInterface;
 import me.kaiyan.realisticvehicles.DataTypes.MissileSettings;
 import me.kaiyan.realisticvehicles.Models.InventoryHandler;
 import me.kaiyan.realisticvehicles.Models.MissileSlot;
-import me.kaiyan.realisticvehicles.Models.Model;
 import me.kaiyan.realisticvehicles.Physics.GroundVehicle;
 import me.kaiyan.realisticvehicles.VehicleManagers.VehicleSaver;
 import me.kaiyan.realisticvehicles.Vehicles.Aircraft;
@@ -28,17 +27,13 @@ import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.CarSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.GroundVehicles.TankSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.TrailerSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleLoaderJSON;
-import me.kaiyan.realisticvehicles.Vehicles.Settings.VehicleSettings;
 import me.kaiyan.realisticvehicles.Vehicles.Tank;
 import me.kaiyan.realisticvehicles.Vehicles.Trailer;
 import me.kaiyan.realisticvehicles.VersionHandler.VersionHandler;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.*;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.ArmorStand;
-import org.bukkit.entity.Entity;
-import org.bukkit.entity.LivingEntity;
-import org.bukkit.entity.Player;
+import org.bukkit.entity.*;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -183,7 +178,7 @@ public class RealisticVehicles extends JavaPlugin {
     public void setupVehicles() {
         //region Tanks
         //region Challenger II
-        TankSettings tankSettings = new TankSettings("Challenger II", 500, 500, "Tanks");
+        TankSettings tankSettings = new TankSettings("Challenger II", 500, 500, "Tanks", new Vector(1, 1,1));
         tankSettings.setVehicleData(0.15, 0.1, 3f, 0.01, 0.75, 0.075, 0.1, 2, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
         tankSettings.setTankData(5, 1, -10, 15, 0.06f, 0.6f);
         tankSettings.setSize(1, 3);
@@ -237,7 +232,7 @@ public class RealisticVehicles extends JavaPlugin {
         tankSettings.register();
         //endregion
         //region Leopard 2A7
-        TankSettings leopardSettings = new TankSettings("Leopard 2A7", 504, 500, "Tanks");
+        TankSettings leopardSettings = new TankSettings("Leopard 2A7", 504, 500, "Tanks", new Vector(1, 1,1));
         leopardSettings.setVehicleData(0.075, 0.1, 4f, 0.03, 1, 0.04, 0.075, 0.4, GroundVehicle.SteerType.TANK, Traversable.BLOCK);
         leopardSettings.setTankData(7, 3, -5, 15, 0.12f, 0.6f);
         leopardSettings.setSize(2, 4);
@@ -277,7 +272,7 @@ public class RealisticVehicles extends JavaPlugin {
 
         f15Model.finish();
 
-        AirVehicleSettings f15Settings = new AirVehicleSettings("F-15", 603, 500, 3, true, "Planes");
+        AirVehicleSettings f15Settings = new AirVehicleSettings("F-15", 603, 500, 3, true, "Planes", new Vector(1, 1, 1));
         f15Settings.setSeatPos(new Vector(0, 0.4, -0.8));
         f15Settings.setControlData(2.5, 2, 4.5, 2, 2.5);
         f15Settings.setFlightData(4, 4, 0.03, 0.0025, 1.5, 2);
@@ -287,10 +282,6 @@ public class RealisticVehicles extends JavaPlugin {
         f15Settings.setBullet(new Shell(0.2, 1, false, false, false, false, Material.REDSTONE_TORCH, Collections.singletonList("Fires the planes bullet"), 10, true, 0, 5, 0.25, 50));
         f15Settings.addGunPosition(new Vector(0.5, -0.1, 0.25));
         f15Settings.setFuelData(50, 0.2f, 0, 300, 0.3f);
-
-        f15Settings.addModelSegment(new int[]{0, 0}, 604, 603);
-        f15Settings.addModelSegment(new int[]{0, -1}, 606, 605);
-        f15Settings.addModelSegment(new int[]{-1, -1}, 608, 607);
 
         f15Settings.addMissileSlot(new MissileSlot(new Vector(2, 1.75, 0), "Left Missile Slot"));
         f15Settings.addMissileSlot(new MissileSlot(new Vector(-2, 1.75, 0), "Right Missile Slot"));
@@ -302,7 +293,7 @@ public class RealisticVehicles extends JavaPlugin {
 
         //region Civilian
         //region S3-X Truck
-        CarSettings trucksettings = new CarSettings("Bessie Trucking S2-X Truck", 800, 400, 3, "Tanks");
+        CarSettings trucksettings = new CarSettings("Bessie Trucking S2-X Truck", 800, 400, 3, "Tanks", new Vector(1, 1,1));
         trucksettings.setSeatPos(new Vector(0.8, 1.3, -0.45));
         DamageModel truckModel = new DamageModel(new Rect(0, 0, 0, 6, 6, 6, true), null, 5);
         truckModel.addComponent(new Component(ComponentType.ENGINE, 5, 2, 1.5, 1, false, 0, 0.75, -0.2, 1.25, 0.75, 0.5, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA));
@@ -319,7 +310,7 @@ public class RealisticVehicles extends JavaPlugin {
         trucksettings.register();
         //endregion
         //region Model 2 Tractor
-        CarSettings tractorSettings = new CarSettings("Jerry Deer's Model 2 Tractor", 801, 800, -0.5f, "Tanks");
+        CarSettings tractorSettings = new CarSettings("Jerry Deer's Model 2 Tractor", 801, 800, -0.5f, "Tanks", new Vector(1, 1,1));
         tractorSettings.setSeatPos(new Vector(0, 1.5, -0.6));
         DamageModel tractorModel = new DamageModel(new Rect(0, 0, 0, 5, 5, 5, true), null, 4);
         tractorModel.addComponent(new Component(ComponentType.ENGINE, 3, 2, 1.5, 1, false, 0, 1.25, 0.75, 0.75, 1, 1, true, false, Particle.CAMPFIRE_SIGNAL_SMOKE, Particle.VILLAGER_ANGRY, Particle.LAVA));
@@ -404,27 +395,33 @@ public class RealisticVehicles extends JavaPlugin {
         debugLog(i.toString());
     }
 
-    public static Entity setSeat(LivingEntity ent, VehicleType type) {
+    public static Entity setSeat(Interaction ent, VehicleType type) {
         ent.getPersistentDataContainer().set(EventListener.vehicleType, PersistentDataType.STRING, type.toString());
         ent.setGravity(false);
         ent.setPersistent(true);
         ent.setInvulnerable(true);
+
+        ent.setResponsive(true);
+        ent.setInteractionWidth(1.5f);
+        ent.setInteractionHeight(1.5f);
+
         return ent;
     }
 
-    public static Entity setTexture(LivingEntity ent, int data, int landing) {
+    public static ItemDisplay setTexture(ItemDisplay ent, int data, int landing) {
         ent.setPersistent(true);
         ent.setInvulnerable(true);
         ent.setGravity(false);
-        ent.setInvisible(true);
+
         ItemStack helmet = new ItemStack(Material.WOODEN_HOE);
         ItemMeta meta = helmet.getItemMeta();
         assert meta != null;
         meta.setCustomModelData(data);
         helmet.setItemMeta(meta);
         ent.getPersistentDataContainer().set(LANDINGKEY, PersistentDataType.STRING, data+":"+landing);
-        Objects.requireNonNull(ent.getEquipment()).setHelmet(helmet);
-        ((ArmorStand) ent).addEquipmentLock(EquipmentSlot.HEAD, ArmorStand.LockType.REMOVING_OR_CHANGING);
+
+        ent.setItemStack(helmet);
+        ent.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.HEAD);
         return ent;
     }
 
@@ -451,115 +448,7 @@ public class RealisticVehicles extends JavaPlugin {
     }
 
     public static void wakeVehicles(){
-        getStaticLogger().info("Getting all sleeping vehicles...");
-        HashMap<String, List<ArmorStand>> sleeps = new HashMap<>();
-        for (World world : getInstance().getServer().getWorlds()){
-            for (Entity en : world.getEntities()){
-                if (en instanceof ArmorStand stand){
-                    if (en.getPersistentDataContainer().has(SLEEPKEY, PersistentDataType.STRING)){
-                        String id = en.getPersistentDataContainer().get(SLEEPKEY, PersistentDataType.STRING).split(";")[0];
-                        RealisticVehicles.debugLog("Got Key: "+id);
-                        if (!sleeps.containsKey(id)) {
-                            sleeps.put(id, new ArrayList<>());
-                        }
-                        sleeps.get(id).add(stand);
-                    }
-                }
-            }
-        }
-        RealisticVehicles.debugLog(sleeps);
-        getStaticLogger().info("Waking sleeping vehicles...");
-        for (Map.Entry<String, List<ArmorStand>> entry : sleeps.entrySet()){
-            ArmorStand en = entry.getValue().get(0);
-            // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-            //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt; yaw
-            String[] info = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-            RealisticVehicles.debugLog(info[1]);
-            switch (VehicleType.valueOf(info[1])){
-                case CAR -> {
-                    Location loc = en.getLocation().clone();
-                    if (info[6].equals("1")){
-                        loc.subtract(new Vector(Float.parseFloat(info[4]), 0, Float.parseFloat(info[5])));
-                    } else if (en.getUniqueId().equals(en.getUniqueId())){
-                        loc.subtract(new Vector(Integer.parseInt(info[4]), 0, Integer.parseInt(info[5])).multiply(Model.GRID_OFFSET));
-                    }
-
-                    for (ArmorStand stand : entry.getValue()){
-                        stand.remove();
-                    }
-
-                    Car car = (Car) VehicleSaver.fromJson(info[3].split("@")[0]).createCraft(loc);
-                    car.setYaw(Float.parseFloat(info[7]));
-                }
-                case TANK -> {
-                    // 0  ; 1           ; 2                                 ; 3  ; 4
-                    //id+";"+getType()+";"+new VehicleSaver(this).toJson()+";seat;"+getVehicleYaw()
-                    ArmorStand seat = null;
-                    ArmorStand turret = null;
-                    ArmorStand gun = null;
-                    ArmorStand base = null;
-                    Location loc = en.getLocation().clone();
-                    boolean enIsSeat = false;
-                    for (ArmorStand stand : entry.getValue()){
-                        String data = stand.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING);
-                        stand.getPersistentDataContainer().remove(RealisticVehicles.SLEEPKEY);
-                        if (Objects.equals(data.split(";")[0], info[0])) {
-                            RealisticVehicles.debugLog(data);
-                            if (data.contains("gun")) gun = stand;
-                            else if (data.contains("turret")) turret = stand;
-                            else if (data.contains("base")) base = stand;
-                            else if (data.contains("seat")) {
-                                seat = stand;
-                                enIsSeat = en.getUniqueId() == stand.getUniqueId();
-                            }
-                        }
-                    }
-                    Tank tank = (Tank) VehicleSaver.fromJson(info[2]).createCraft(loc);
-                    tank.resetModels(seat, base, gun, turret);
-                    if (enIsSeat){
-                        loc.subtract(tank.getSeatPos());
-                    }
-                    tank.setLoc(loc);
-                    tank.setYaw(Float.parseFloat(info[4]));
-                }
-                case AIR -> {
-                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt        ; yaw
-                    Location loc = en.getLocation().clone();
-                    if (info[6].equals("1")){
-                        if (en.getUniqueId().equals(en.getUniqueId()))
-                            loc.subtract(new Vector(Float.parseFloat(info[4]), 0, Float.parseFloat(info[5])));
-                        continue;
-                    } else if (en.getUniqueId().equals(en.getUniqueId())){
-                        loc.subtract(new Vector(Integer.parseInt(info[4]), 0, Integer.parseInt(info[5])).multiply(Model.GRID_OFFSET));
-                    }
-
-                    for (ArmorStand stand : entry.getValue()){
-                        stand.remove();
-                    }
-                    Aircraft plane = (Aircraft) VehicleSaver.fromJson(info[3]).createCraft(loc);
-                    plane.setYaw(Float.parseFloat(info[7]));
-                }
-                case TRAILER -> {
-                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt       ; yaw
-                    Location loc = en.getLocation();//.clone();
-
-                    loc.subtract(new Vector(Integer.parseInt(info[4]), 0, Integer.parseInt(info[5])).multiply(Model.GRID_OFFSET));
-
-                    for (ArmorStand stand : entry.getValue()){
-                        stand.remove();
-                    }
-                    // 0       ; 1      ; 2      ; 3      ; 4                   ; 5                 ; 6 (0 or 1 value); 7
-                    //sleepID+";"+type+";"+name+";"+data+";"+stand.getKey()[0]+";"+stand.getKey()[1];isSeatEnt       ; yaw
-                    String[] sinfo = en.getPersistentDataContainer().get(RealisticVehicles.SLEEPKEY, PersistentDataType.STRING).split(";");
-                    Trailer trailer = new Trailer(loc, TrailerSettings.getTrailerSettings(sinfo[2]));
-
-                    trailer.setYaw(Float.parseFloat(sinfo[7]));
-                }
-            }
-        }
+        //TODO ADD WAKE CODE
     }
-
     //public void effectExplosion
 }

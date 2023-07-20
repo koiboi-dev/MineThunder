@@ -93,7 +93,8 @@ public class VehicleLoaderJSON {
                         obj.getFloat("price"),
                         obj.getFloat("midoffset"),
                         obj.optBoolean("shift", false),
-                        obj.getString("shopgroup")
+                        obj.getString("shopgroup"),
+                        vectorFromJson(obj.getJSONArray("scale"))
                 );
                 JSONObject control = obj.getJSONObject("control");
                 settings.setControlData(
@@ -121,10 +122,6 @@ public class VehicleLoaderJSON {
                     JSONArray ary = (JSONArray) pos;
                     settings.addGunPosition(new Vector(ary.getFloat(0), ary.getFloat(1), ary.getFloat(2)));
                 }
-                for (Object pos : obj.getJSONArray("models")){
-                    JSONArray ary = (JSONArray) pos;
-                    settings.addModelSegment(new int[] {ary.getInt(0), ary.getInt(1)}, ary.getInt(2), ary.getInt(3));
-                }
                 for (Object slotobj : obj.getJSONArray("missileSlots")){
                     JSONObject slot = (JSONObject) slotobj;
                     settings.addMissileSlot(new MissileSlot(
@@ -151,7 +148,7 @@ public class VehicleLoaderJSON {
                 settings.register();
             }
             case TANK -> {
-                TankSettings settings = new TankSettings(obj.getString("type"), obj.getInt("texID"), obj.getFloat("price"), obj.getString("shopgroup"));
+                TankSettings settings = new TankSettings(obj.getString("type"), obj.getInt("texID"), obj.getFloat("price"), obj.getString("shopgroup"), vectorFromJson(obj.getJSONArray("scale")));
                 setGroundVehicleData(settings, obj.getJSONObject("vehicleData"));
                 settings.setPositions(
                         vectorFromJson(obj.getJSONArray("seatPos")),
